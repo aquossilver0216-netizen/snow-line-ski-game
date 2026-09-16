@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#18282e"><title>SNOW LINE — Alpine descent</title>
+<style>
+:root{font-family:"Helvetica Neue","Hiragino Sans","Yu Gothic",sans-serif;color:#fff;background:#18282e;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #ffbd92;outline-offset:4px}[hidden]{display:none!important}
+.game{position:relative;width:100%;height:100svh;min-height:580px;overflow:hidden;background:#9ec1d4;isolation:isolate}.game:fullscreen{height:100vh}.game:focus{outline:none}canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
+.shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0a1e314d,transparent 23%,transparent 66%,#0b1e2860)}
+.topbar{position:absolute;top:0;left:0;right:0;padding:29px 38px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:3}.wordmark{font-size:15px;font-weight:600;letter-spacing:.25em;text-shadow:0 2px 18px #18333f}.wordmark small{display:block;font-size:9px;font-weight:400;letter-spacing:.23em;margin-top:8px;opacity:.7}.actions{display:flex;gap:9px}.glass{border:1px solid #ffffff55;border-radius:50px;background:#16303b55;backdrop-filter:blur(12px);color:#fff;padding:10px 17px;font-size:11px;letter-spacing:.08em}
+.sensitivity{display:flex;align-items:center;gap:7px;padding-block:7px}.sensitivity select{appearance:none;border:0;border-radius:20px;background:#dcecf0;color:#17313a;padding:4px 22px 4px 8px;font-size:11px;font-weight:600;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,#17313a 50%),linear-gradient(135deg,#17313a 50%,transparent 50%);background-position:calc(100% - 10px) 50%,calc(100% - 6px) 50%;background-size:4px 4px,4px 4px;background-repeat:no-repeat}
+.sensitivity select:disabled{opacity:.65;cursor:default}
+.hud{position:absolute;top:109px;left:38px;display:flex;gap:32px;z-index:2;pointer-events:none;text-shadow:0 2px 16px #1b303a99;opacity:0;transition:opacity .3s}.playing .hud{opacity:1}.stat span{display:block;font-size:9px;letter-spacing:.2em;color:#e3eff4;margin-bottom:6px}.stat strong{font-size:27px;line-height:1;font-weight:400;font-variant-numeric:tabular-nums}.stat small{font-size:11px;opacity:.7}.score-stat{display:none}
+.next-gate{position:absolute;top:123px;right:38px;font-size:10px;letter-spacing:.16em;opacity:0;z-index:2}.playing .next-gate{opacity:.85}
+.commentary{position:absolute;left:50%;top:24%;transform:translate(-50%,-8px);z-index:4;padding:11px 22px;background:#173c44bc;backdrop-filter:blur(10px);border:1px solid #ffffff40;border-radius:40px;font-size:14px;white-space:nowrap;opacity:0;transition:opacity .15s,transform .15s;pointer-events:none}.commentary.visible,.commentary[data-kind=error]{opacity:1;transform:translate(-50%,0)}.commentary[data-kind=miss],.commentary[data-kind=hit]{background:#873f35cf}
+.overlay{position:absolute;inset:0;display:flex;align-items:flex-end;z-index:2;background:linear-gradient(0deg,#0a1d2dcc,transparent 78%);padding:0 7vw 14vh;pointer-events:none}.modal{width:min(570px,100%);pointer-events:auto}.kicker{font-size:10px;letter-spacing:.30em;color:#d4e5e9;margin-bottom:18px}.modal h1{font-size:clamp(52px,8vw,106px);font-weight:300;letter-spacing:-.04em;line-height:.96;margin:0 0 19px;text-shadow:0 5px 40px #071a2040}.modal p{font-size:14px;font-weight:300;line-height:2;letter-spacing:.07em;white-space:pre-line;color:#e2edf0;margin:0 0 25px}.primary{display:inline-flex;align-items:center;gap:38px;min-height:54px;padding:15px 28px;color:#1c2b2d;background:#f5b58d;border:0;border-radius:3px;font-size:13px;letter-spacing:.1em}.primary::after{content:'↗';font-size:19px}.controls-note{font-size:10px;letter-spacing:.08em;color:#c4d5dc;margin-top:17px;line-height:1.8}
+.save{display:flex;gap:8px;margin:20px 0}.save input{width:200px;max-width:55%;min-width:0;border:1px solid #aecad366;background:#16323bca;color:#fff;border-radius:4px;padding:13px;font-size:14px}.save button{border:1px solid #ffffff55;border-radius:4px;background:#d2e8ed;color:#19313b;padding:10px 16px;font-size:12px}
+.bottom{position:absolute;bottom:25px;left:38px;right:38px;display:flex;justify-content:space-between;align-items:flex-end;gap:25px;z-index:1;pointer-events:none}.location{font-size:10px;letter-spacing:.16em;line-height:1.8;text-shadow:0 2px 10px #153540}.location span{display:block;font-size:9px;color:#d0e1e6;letter-spacing:.1em}.distance{font-size:10px;text-align:right;letter-spacing:.1em;width:140px}.progress-track{height:2px;background:#ffffff38;margin-top:9px}#progress{height:2px;width:0;background:#f5b58d}
+.feet{position:absolute;inset:auto 0 75px;display:flex;justify-content:center;gap:12px;z-index:1;opacity:0;pointer-events:none;transition:opacity .3s}.playing .feet{opacity:1}.foot{pointer-events:auto;touch-action:none;user-select:none;border:1px solid #ffffff50;background:#10293450;color:#fff;backdrop-filter:blur(8px);width:100px;height:44px;border-radius:30px;font-size:13px}.foot.pressed{background:#d39a70a8}.foot small{font-size:9px;opacity:.7;margin:0 8px}
+.ranking-panel{position:absolute;right:25px;top:90px;width:min(320px,calc(100% - 50px));z-index:6;background:#122a34ef;backdrop-filter:blur(20px);border:1px solid #ffffff30;padding:26px;border-radius:12px;box-shadow:0 18px 70px #06202b55}.ranking-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.ranking-head h2{font-size:12px;letter-spacing:.12em;font-weight:500;margin:0}.ranking-head button{background:none;border:0;color:#fff;font-size:25px;width:35px;height:35px}.ranking{padding:0;list-style:none;margin:18px 0}.ranking li{display:flex;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid #ffffff1a;font-size:13px}.ranking span{overflow-wrap:anywhere}.ranking strong{font-weight:400;color:#f5c49f;white-space:nowrap;font-variant-numeric:tabular-nums}.aside-copy{font-size:10px;line-height:1.8;color:#a9c2ce}.tilt{width:100%;margin-top:8px;border:1px solid #ffffff33;border-radius:4px;background:#24444f;color:#e0edf1;padding:12px;font-size:11px}
+@media(max-width:650px){.game{min-height:580px}.topbar{padding:22px 20px}.wordmark{font-size:12px}.wordmark small{font-size:8px}.glass{padding:10px 12px;font-size:10px}#fullscreen{display:none}.hud{top:102px;left:20px;gap:22px}.stat strong{font-size:23px}.next-gate{top:168px;left:20px;right:auto;font-size:9px}.overlay{padding:0 25px 24vh}.modal h1{font-size:58px}.modal p{font-size:12px}.bottom{left:20px;right:20px;bottom:20px}.distance{width:96px}.feet{bottom:80px;gap:14px}.foot{width:125px;height:58px}.controls-note{font-size:9px}.commentary{top:34%;font-size:12px}.finished .overlay{padding-bottom:20vh}.save input{font-size:16px}}
+@media(max-height:640px) and (min-width:651px){.game{min-height:460px}.overlay{padding-bottom:100px}.modal h1{font-size:62px}.modal p{line-height:1.6;margin-bottom:15px}.kicker{margin-bottom:12px}.feet{bottom:68px}.hud{top:89px}.next-gate{top:101px}}
+.drive-state{font-size:10px;letter-spacing:.08em;margin-top:8px;min-height:12px;color:#e5f6ee}.drive-state[data-mode=turn]{color:#ffd1a3}
+@media(max-width:650px){.hud{gap:17px}.stat strong{font-size:21px}.stat small{font-size:10px}.drive-state{font-size:9px}.next-gate{top:181px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:650px){.topbar{gap:8px;padding-inline:16px}.actions{gap:5px}.glass{padding:10px 8px;white-space:nowrap}.wordmark{letter-spacing:.15em}.wordmark small{letter-spacing:.10em}}
+@media(max-width:400px){.wordmark{font-size:10px;letter-spacing:.1em}.wordmark small{font-size:7px;letter-spacing:0}.glass{letter-spacing:0;padding-inline:7px}}
+.dnf .modal h1{color:#ffb4a2}.dnf .overlay{background:linear-gradient(0deg,#311a20dd,transparent 85%)}.dnf .controls-note{display:none}
+.drive-state[data-mode=rut]{color:#ffba91}
+.crashing .feet{opacity:0;pointer-events:none}.crashing .foot{pointer-events:none}
+.crashing::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 20% 100%,#edf7ffe6,transparent 62%),radial-gradient(ellipse at 80% 110%,#e9f3ffcf,transparent 67%);animation:snow-impact 1.2s ease-out both}
+@keyframes snow-impact{0%{opacity:0;transform:translateY(30%)}25%{opacity:.9}100%{opacity:0;transform:translateY(-12%)}}
+@media(max-width:650px){.topbar{align-items:flex-start}.actions{flex-wrap:wrap;justify-content:flex-end;max-width:245px}.wordmark{flex-shrink:0}}
+@media(prefers-reduced-motion:reduce){.crashing::after{animation:none;opacity:.15}}
+
+</style>
+</head>
+<body>
+<main id="festival-ski" class="game" tabindex="0" aria-label="一人称3Dスキーゲーム">
+ <canvas id="course" aria-label="雪山の斜面を自分の目線で滑る3Dコース"></canvas><div class="shade"></div>
+ <header class="topbar"><div class="wordmark">SNOW LINE<small>GIANT SLALOM / 02</small></div><div class="actions"><label class="sensitivity glass">感度<select id="sensitivity" aria-label="ターン感度"><option value="0.5">0.5×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option></select></label><label class="sensitivity glass">速度<select id="speed-multiplier" aria-label="滑走速度"><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option></select></label><button id="music" class="glass" type="button" aria-pressed="true">BGM：ON</button><button id="quality" class="glass" type="button" aria-label="高精細画質。押すと標準画質に切り替え" title="重い場合は標準画質へ">画質：高</button><button id="pause" class="glass" disabled type="button">一時停止</button><button id="show-ranking" class="glass" type="button">記録</button><button id="fullscreen" class="glass" type="button">全画面</button></div></header>
+ <div class="hud"><div class="stat"><span>TIME</span><strong id="time">0.0</strong> <small>s</small></div><div class="stat"><span>SPEED</span><strong id="speed">0</strong> <small>km/h</small><div id="drive-state" class="drive-state"></div></div><div class="stat"><span>SLOPE</span><strong id="slope">11</strong> <small>°</small></div><div class="stat"><span>GATES</span><strong id="gates">0 / 24</strong></div><div class="stat score-stat"><span>SCORE</span><strong id="score">0</strong></div></div>
+ <div id="next-gate" class="next-gate"></div><div id="commentary" class="commentary" role="status"></div>
+ <div class="feet" aria-label="左右にターン"><button class="foot" data-control="left" type="button" aria-label="左にターン">← <small>LEFT</small></button><button class="foot" data-control="right" type="button" aria-label="右にターン"><small>RIGHT</small> →</button></div>
+ <div id="overlay" class="overlay"><section class="modal"><div class="kicker">THE MOUNTAIN IS YOURS.</div><h1 id="overlay-title">SNOW LINE.</h1><p id="overlay-copy">白銀の、その先へ。
+24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><div class="controls-note">← → / A・D：ターン　·　離すと直滑降　·　Space：一時停止<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
+ <div class="bottom"><div class="location">ALPINE RIDGE<span>1,440 METRES · 24 GATES · GS</span></div><div class="distance"><span id="remaining">1440 m</span><div class="progress-track"><div id="progress"></div></div></div></div>
+ <aside id="ranking-panel" class="ranking-panel" hidden><div class="ranking-head"><h2>BEST RUNS</h2><button id="close-ranking" type="button" aria-label="記録を閉じる">×</button></div><ol id="ranking" class="ranking"></ol><p class="aside-copy">全24旗を通過した完走者のベスト5。<br>DNFは記録対象外です。</p><button id="tilt" class="tilt" type="button" aria-pressed="false">このスマホの傾きで操作</button></aside>
+</main>
+<script>
+/* Deterministic game rules. This file has no browser dependencies. */
+(()=>{'use strict';
+  const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+  const FINISH=1440;
+  const TRACK_UNIT=11;
+  const netHalfWidth=distance=>42.5+Math.sin(distance*.015)*.32;
+  const SPEED_SCALE=3;
+  const MIN_SPEED=4.5*SPEED_SCALE,MAX_SPEED=33*SPEED_SCALE;
+  // Shared smooth downhill profile: height and gravity use the same derivative.
+  const BASE_GRADE=.22;
+  const slopePattern=[{at:60,to:.64,width:44},{at:255,to:.19,width:46},{at:315,to:.75,width:50},{at:550,to:.25,width:40},{at:580,to:.62,width:36},{at:700,to:.16,width:40}];
+  const slopeChanges=[...slopePattern,...slopePattern.map(p=>({...p,at:p.at+720}))];
+  const COURSE_CURVES=[{amp:26,freq:.012},{amp:12,freq:.025}];
+  const curveCenter=d=>COURSE_CURVES.reduce((sum,c)=>sum+c.amp*Math.sin(d*c.freq),0);
+  const curveSlope=d=>COURSE_CURVES.reduce((sum,c)=>sum+c.amp*c.freq*Math.cos(d*c.freq),0);
+  function courseGrade(distance){let grade=BASE_GRADE,previous=BASE_GRADE;for(const part of slopeChanges){const t=clamp((distance-part.at+part.width/2)/part.width,0,1);grade+=(part.to-previous)*t*t*(3-2*t);previous=part.to;}return grade;}
+  function courseHeight(distance){let drop=BASE_GRADE*distance,previous=BASE_GRADE;for(const part of slopeChanges){const t=(distance-part.at+part.width/2)/part.width;const integral=t<=0?0:t>=1?t-.5:t*t*t-.5*t*t*t*t;drop+=(part.to-previous)*part.width*integral;previous=part.to;}return -drop;}
+  const slopeDegrees=distance=>Math.atan(courseGrade(distance)/Math.hypot(1,curveSlope(distance)))*180/Math.PI;
+  const GATE_WIDTH=.52;
+  const FLAG_WIDTH=.20,SKIER_CLEARANCE=.035;
+  const SKI_OUTER_EDGE=.335,POLE_REACH=.90;
+  const RUT={depth:1.92,lip:.24,halfNarrow:5.625,halfWide:11.25,edgeFeather:2.4};
+  const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+  const COURSE_LIMIT=3.88;
+  const gates=Array.from({length:24},(_,i)=>{
+    const distance=60+(i%12)*54+Math.floor(i/12)*720;
+    const side=i%2?-1:1;
+    const center=side*2.4*[.46,.52,.48,.54,.50,.47,.55,.51,.48,.53,.47,.50][i%12];
+    return {id:i,distance,center,side,color:i%2?'blue':'red'};
+  });
+  // This course alternates red/right and blue/left around a single flag panel.
+  const clearsGate=(gate,x)=>gate.side*(x-gate.center)*TRACK_UNIT>=FLAG_WIDTH*TRACK_UNIT/2+SKI_OUTER_EDGE;
+  function rutProfile(distance){
+    const target=gate=>(gate.center+gate.side*.20)*TRACK_UNIT;
+    if(distance<=gates[0].distance){
+      const t=clamp(distance/gates[0].distance,0,1),shape=.5-.5*Math.cos(t*Math.PI);
+      return [target(gates[0])*shape,gates[0].side,.45+.55*shape,RUT.halfNarrow+(RUT.halfWide-RUT.halfNarrow)*shape];
+    }
+    const last=gates[gates.length-1];
+    if(distance>=last.distance){
+      const t=clamp((distance-last.distance)/(FINISH-last.distance),0,1),shape=.5-.5*Math.cos(t*Math.PI);
+      return [target(last)*(1-shape),last.side,1-.55*shape,RUT.halfWide-(RUT.halfWide-RUT.halfNarrow)*shape];
+    }
+    let index=0;while(index<gates.length-2&&distance>=gates[index+1].distance)index++;
+    const gate=gates[index],next=gates[index+1],t=clamp((distance-gate.distance)/(next.distance-gate.distance),0,1);
+    const shape=.5-.5*Math.cos(t*Math.PI),pulse=Math.abs(Math.cos(t*Math.PI));
+    return [target(gate)+(target(next)-target(gate))*shape,gate.side+(next.side-gate.side)*shape,.42+.58*Math.pow(pulse,1.4),RUT.halfNarrow+(RUT.halfWide-RUT.halfNarrow)*pulse];
+  }
+  function fluffySnowAt(x,distance){
+    const [lane,,strength,halfWidth]=rutProfile(distance),q=Math.abs(x-lane);
+    const groove=1-smooth(halfWidth-RUT.edgeFeather,halfWidth+RUT.edgeFeather,q);
+    return 1-groove;
+  }
+  // Keep a clear corridor connecting the outside of successive flags.
+  function raceLine(distance){
+    const next=gates.findIndex(g=>g.distance>=distance);
+    const target=g=>g.center+g.side*.20;
+    if(next===0)return target(gates[0])*clamp(distance/gates[0].distance,0,1);
+    if(next<0)return target(gates[gates.length-1]);
+    const a=gates[next-1],b=gates[next],t=(distance-a.distance)/(b.distance-a.distance);
+    return target(a)+(target(b)-target(a))*(.5-.5*Math.cos(t*Math.PI));
+  }
+
+  // Sweep the entire movement segment so high speed cannot skip a collision.
+  function boxContact(x0,d0,x1,d1,minX,maxX,minD,maxD){
+    let enter=0,leave=1;
+    for(const [p,delta,lo,hi]of [[x0,x1-x0,minX,maxX],[d0,d1-d0,minD,maxD]]){
+      if(Math.abs(delta)<1e-10){if(p<lo||p>hi)return null;continue;}
+      const a=(lo-p)/delta,b=(hi-p)/delta;
+      enter=Math.max(enter,Math.min(a,b));leave=Math.min(leave,Math.max(a,b));
+      if(enter>leave)return null;
+    }
+    return enter;
+  }
+  function firstContact(x0,d0,x1,d1){
+    let hit=null;const consider=(t,cause)=>{if(t!==null&&(!hit||t<hit.t))hit={t,cause};};
+    // Flags are judged at the gate plane using both ski edges. Upper-body
+    // contact is allowed when both skis pass outside the turning pole.
+    const clearance=t=>Math.abs(x0+(x1-x0)*t)*TRACK_UNIT+SKIER_CLEARANCE*TRACK_UNIT+.055-netHalfWidth(d0+(d1-d0)*t);
+    if(clearance(0)>=0)consider(0,'赤いネットに接触');
+    else if(clearance(1)>=0){let lo=0,hi=1;for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(clearance(mid)>=0)hi=mid;else lo=mid;}consider(hi,'赤いネットに接触');}
+    return hit;
+  }
+
+  class SkiRun{
+    constructor(){this.reset();}
+    reset(){
+      this.state='ready';this.x=0;this.velocityX=0;this.distance=0;
+      this.speed=0;this.speedMultiplier=1;this.elapsed=0;this.penalty=0;this.score=0;
+      this.turnLoad=0;this.skiSteer=0;this.turnSensitivity=1;this.heldTurnTime=0;this.turnBrakeMultiplier=1;this.acceleration=0;
+      this.combo=0;this.gatesPassed=0;this.gatesMissed=0;
+      this.hitCooldown=0;this.processedGates=new Set();this.dnfReason='';
+      this.snowLoad=1;this.poleHits=new Set();this.audioEvents=[];this.crashTime=0;this.crashSide=1;this.crashSpeed=0;
+      this.event={type:'ready',text:'スタートを待っています'};
+    }
+    start(){
+      this.reset();
+      this.state='running';this.speed=8*SPEED_SCALE;this.event={type:'start',text:'スタート！'};
+    }
+    pause(){if(this.state==='running')this.state='paused';}
+    resume(){if(this.state==='paused')this.state='running';}
+    fail(reason){
+      if(this.state!=='running')return;
+      this.crashSpeed=this.speed;this.crashSide=Math.sign(this.velocityX)||Math.sign(this.x)||1;this.crashTime=0;
+      this.state='dnf';this.dnfReason=reason;this.speed=0;this.velocityX=0;this.acceleration=0;
+      this.turnLoad=0;this.heldTurnTime=0;this.turnBrakeMultiplier=1;this.combo=0;
+      this.event={type:'dnf',text:`${reason} — DNF`};
+    }
+    step(dt,input={}){
+      if(this.state==='dnf'){this.crashTime=Math.min(1.5,this.crashTime+clamp(dt,0,1/30));return;}
+      if(this.state!=='running')return;
+      dt=clamp(dt,0,1/30);this.elapsed+=dt;this.hitCooldown=Math.max(0,this.hitCooldown-dt);
+      const sensitivity=clamp(Number(input.sensitivity)||1,.5,2);
+      const speedMultiplier=clamp(Number(input.speedMultiplier)||1,1,2);this.speedMultiplier=speedMultiplier;
+      const [, , ,rutHalfWidth]=rutProfile(this.distance);
+      const widthPulse=clamp((rutHalfWidth-RUT.halfNarrow)/(RUT.halfWide-RUT.halfNarrow),0,1);
+      this.turnSensitivity=1-.5*widthPulse;
+      const steer=clamp(Number(input.steer)||0,-1,1),controlSteer=steer*.75*sensitivity*this.turnSensitivity;
+      this.skiSteer+=(controlSteer-this.skiSteer)*(1-Math.exp(-dt*12));
+      const previousX=this.x;
+      const baseSpeed=this.speed/SPEED_SCALE;
+      const targetV=controlSteer*(.75+clamp(baseSpeed/20,0,1)*1.10)*SPEED_SCALE;
+      this.velocityX+=(targetV-this.velocityX)*(1-Math.exp(-dt*9*SPEED_SCALE));
+      this.x=clamp(this.x+this.velocityX*dt*speedMultiplier,-COURSE_LIMIT,COURSE_LIMIT);
+      this.turnLoad+=(Math.abs(controlSteer)-this.turnLoad)*(1-Math.exp(-dt*10*SPEED_SCALE));
+      // Short turns stay light. Sustained steering progressively digs in;
+      // releasing the control sheds the accumulated braking over about 0.6 s.
+      const turnAmount=Math.abs(controlSteer);
+      this.heldTurnTime=clamp(this.heldTurnTime+dt*(turnAmount>.12?turnAmount:-3.5),0,2.2);
+      const sustained=clamp((this.heldTurnTime-.35)/1.85,0,1);
+      this.turnBrakeMultiplier=1+3*sustained*sustained;
+      const grade=courseGrade(this.distance);
+      const surfaceScale=Math.sqrt(1+grade*grade+curveSlope(this.distance)**2);
+      const gravity=9.81*grade/surfaceScale;
+      const resistance=.16+.003*baseSpeed*baseSpeed;
+      const edging=this.turnLoad*(2.5+.62*baseSpeed)/3*this.turnBrakeMultiplier*2;
+      const previousSpeed=this.speed;
+      this.snowLoad=(fluffySnowAt(this.x*TRACK_UNIT-.24,this.distance)+fluffySnowAt(this.x*TRACK_UNIT+.24,this.distance))*.5;
+      const snowDrag=this.snowLoad*(.8+baseSpeed*.09);
+      this.speed=clamp(this.speed+(gravity-resistance-edging-snowDrag)*dt*SPEED_SCALE*SPEED_SCALE,MIN_SPEED,MAX_SPEED);
+      this.acceleration=(this.speed-previousSpeed)/(dt||1);
+      const before=this.distance;
+      this.distance=Math.min(FINISH,this.distance+this.speed*speedMultiplier/surfaceScale*dt);
+
+      let impact=firstContact(previousX,before,this.x,this.distance);
+      // A missed gate is a terminal event at the crossing, even if another
+      // contact would happen later in this simulation step.
+      for(const gate of gates){
+        if(this.processedGates.has(gate.id)||!(before<gate.distance&&this.distance>=gate.distance))continue;
+        const t=(gate.distance-before)/(this.distance-before),crossingX=previousX+(this.x-previousX)*t;
+        if(!clearsGate(gate,crossingX)&&(!impact||t<impact.t))impact={t,cause:`第${gate.id+1}ゲート不通過`,gateId:gate.id};
+      }
+      if(impact){
+        this.x=previousX+(this.x-previousX)*impact.t;this.distance=before+(this.distance-before)*impact.t;
+        if(impact.gateId!==undefined){this.gatesMissed++;this.processedGates.add(impact.gateId);}
+        this.elapsed-=dt*(1-impact.t);this.fail(impact.cause);return;
+      }
+
+      for(const gate of gates){
+        if(this.processedGates.has(gate.id)||!(before<gate.distance&&this.distance>=gate.distance))continue;
+        this.processedGates.add(gate.id);
+        const crossing=(gate.distance-before)/(this.distance-before);
+        const crossingX=previousX+(this.x-previousX)*crossing;
+        if(clearsGate(gate,crossingX)){
+          this.gatesPassed++;this.combo++;this.score+=100+Math.min(this.combo-1,5)*20;
+          this.event={type:'gate',text:this.combo>=3?`${this.combo}連続ゲート！`:'ナイスゲート！'};
+          const poleGap=gate.side*(crossingX-gate.center)*TRACK_UNIT-FLAG_WIDTH*TRACK_UNIT/2;
+          if(poleGap<=POLE_REACH){
+            this.poleHits.add(gate.id);this.audioEvents.push('pole');
+            this.event={type:'pole',text:'ポールヒット！ 通過OK'};
+          }
+        }
+      }
+
+      if(this.distance>=FINISH){
+        this.state='finished';this.speed=0;this.velocityX=0;this.acceleration=0;this.turnLoad=0;this.heldTurnTime=0;this.turnBrakeMultiplier=1;
+        this.score+=Math.max(0,Math.round(1500-this.totalTime*18));
+        this.event={type:'finish',text:'ゴール！'};
+      }
+    }
+    get totalTime(){return this.elapsed+this.penalty;}
+    get remaining(){return Math.max(0,FINISH-this.distance);}
+    get progress(){return this.distance/FINISH;}
+  }
+
+  globalThis.FestivalSkiCore={SkiRun,gates,raceLine,RUT,rutProfile,fluffySnowAt,COURSE_CURVES,curveCenter,curveSlope,COURSE_LIMIT,FINISH,TRACK_UNIT,netHalfWidth,GATE_WIDTH,FLAG_WIDTH,SKIER_CLEARANCE,clearsGate,clamp,courseGrade,courseHeight,slopeDegrees,MIN_SPEED,MAX_SPEED,SPEED_SCALE};
+})();
+
+</script><script>
+/* Self-contained WebGL2 alpine scene. Geometry and shaders are generated locally. */
+(()=>{'use strict';
+const {gates,FINISH,FLAG_WIDTH,clamp,courseHeight,SPEED_SCALE,COURSE_CURVES,curveCenter,curveSlope,TRACK_UNIT,netHalfWidth,RUT,rutProfile}=globalThis.FestivalSkiCore;
+const WIDTH=TRACK_UNIT, SUN=[-.38,.34,-.86], COURSE_EDGE=40.5, FINISH_HALF=42;
+const mix=(a,b,t)=>a+(b-a)*t;
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const sub=(a,b)=>a.map((v,i)=>v-b[i]);
+const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=a=>{const d=Math.hypot(...a)||1;return a.map(v=>v/d);};
+const identity=()=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+function multiply(a,b){const r=new Float32Array(16);for(let c=0;c<4;c++)for(let j=0;j<4;j++)for(let k=0;k<4;k++)r[c*4+j]+=a[k*4+j]*b[c*4+k];return r;}
+function perspective(fov,aspect,near,far){const f=1/Math.tan(fov/2);return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);}
+function view(eye,target,up=[0,1,0]){const z=norm(sub(eye,target)),x=norm(cross(up,z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1]);}
+function ortho(r){return new Float32Array([1/r,0,0,0,0,1/r,0,0,0,0,-2/440,0,0,0,-1,1]);}
+function hash(x,z){let n=Math.imul(x,374761393)+Math.imul(z,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;}
+function noise(x,z){const a=Math.floor(x),b=Math.floor(z),u=smooth(0,1,x-a),v=smooth(0,1,z-b);return mix(mix(hash(a,b),hash(a+1,b),u),mix(hash(a,b+1),hash(a+1,b+1),u),v);}
+function fbm(x,z){let sum=0,amp=.5;for(let i=0;i<5;i++){sum+=noise(x,z)*amp;x=x*2.05+4.9;z=z*2.03-8.2;amp*=.5;}return sum;}
+function snowWearHeight(x,distance){
+  if(Math.abs(x)>44)return 0;
+  const [lane,sideBlend,strength,halfWidth]=rutProfile(distance),dx=x-lane,q=Math.abs(dx);
+  // One continuous S-shaped packed line, with a soft inner edge and a low outer berm.
+  const across=1-smooth(halfWidth-RUT.edgeFeather,halfWidth+RUT.edgeFeather,q);
+  const rightWeight=(sideBlend+1)*.5,leftWeight=1-rightWeight;
+  const lip=rightWeight*Math.exp(-Math.pow((dx-(halfWidth+.65))/1.1,2))+leftWeight*Math.exp(-Math.pow((dx+(halfWidth+.65))/1.1,2));
+  return strength*(-RUT.depth*across+RUT.lip*lip);
+}
+function floorHeight(x,z){
+  const piste=courseHeight(-z);
+  const bank=smooth(43,58,Math.abs(x));
+  const shoulders=smooth(58,147,Math.abs(x))*(16+fbm(x*.018,z*.013)*74);
+  const drifts=bank*Math.pow(noise(x*.09,z*.045),3)*1.7;
+  return piste+shoulders+drifts+bank*(2.0+fbm(x*.035,z*.024)*16)+(fbm(x*.22,z*.08)-.5)*.11+snowWearHeight(x,-z);
+}
+class Geometry{
+ constructor(){this.data=[];}
+ vertex(p,n,c,m){this.data.push(...p,...n,...c,m);}
+ tri(a,b,c,color,mat=1){let n=norm(cross(sub(b,a),sub(c,a)));this.vertex(a,n,color,mat);this.vertex(b,n,color,mat);this.vertex(c,n,color,mat);}
+ quad(a,b,c,d,color,mat=1){this.tri(a,b,c,color,mat);this.tri(a,c,d,color,mat);}
+ box(x,y,z,w,h,d,c,m=1){const p=[[-w,0,-d],[w,0,-d],[w,h,-d],[-w,h,-d],[-w,0,d],[w,0,d],[w,h,d],[-w,h,d]].map(v=>[v[0]+x,v[1]+y,v[2]+z]);for(const [a,b,c1,d1]of [[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[3,7,6,2],[0,1,5,4]])this.quad(p[a],p[b],p[c1],p[d1],c,m);}
+ cylinder(x,y,z,r,h,color,mat=1,sides=12){
+  for(let k=0;k<sides;k++){const a=k*Math.PI*2/sides,b=(k+1)*Math.PI*2/sides;
+   const p=(t,yy)=>[x+Math.cos(t)*r,yy,z+Math.sin(t)*r];
+   this.quad(p(a,y),p(a,y+h),p(b,y+h),p(b,y),color,mat);
+   this.tri(p(a,y+h),[x,y+h,z],p(b,y+h),color,mat);
+  }
+ }
+ limb(a,b,r0,r1,color,mat=4){
+  const axis=norm(sub(b,a)),right=norm(cross(axis,Math.abs(axis[1])>.9?[1,0,0]:[0,1,0])),up=cross(axis,right);
+  const ring=(p,r,k)=>p.map((v,i)=>v+r*(Math.cos(k*Math.PI/3)*right[i]+Math.sin(k*Math.PI/3)*up[i]));
+  for(let k=0;k<6;k++)this.quad(ring(a,r0,k),ring(b,r1,k),ring(b,r1,k+1),ring(a,r0,k+1),color,mat);
+ }
+ cone(x,y,z,r,h,color,rot=0){
+  const ring=k=>{const a=k*Math.PI/8+rot,branch=.82+.18*Math.cos(k*Math.PI)+.055*Math.sin(k*2.3+rot);return [x+Math.cos(a)*r*branch,y+Math.sin(k*1.4+rot)*h*.035,z+Math.sin(a)*r*branch];};
+  for(let k=0;k<16;k++)this.tri(ring(k),[x+Math.sin(rot)*r*.08,y+h,z],ring((k+1)%16),color);
+ }
+ bough(x,y,z,angle,length,width,color){
+  const dx=Math.cos(angle),dz=Math.sin(angle),root=[x,y,z],tip=[x+dx*length,y-length*.14,z+dz*length];
+  const l=[x+dx*length*.55-dz*width,y-.04,z+dz*length*.55+dx*width],r=[x+dx*length*.55+dz*width,y-.04,z+dz*length*.55-dx*width],ridge=[x+dx*length*.50,y+width*.35,z+dz*length*.50];
+  this.tri(root,l,ridge,color);this.tri(l,tip,ridge,color);this.tri(tip,r,ridge,color);this.tri(r,root,ridge,color);
+ }
+ boulder(x,z,r,h,random){
+  const sides=18,rings=7,phase=random()*Math.PI*2,stretch=.7+random()*.3;
+  const edges=Array.from({length:sides},()=>.82+random()*.25),points=[];
+  const ground=floorHeight(x,z),stone=[.24+random()*.06,.25+random()*.05,.27+random()*.06];
+  for(let j=0;j<=rings;j++){
+   const t=j/rings,rad=Math.cos(t*Math.PI/2),row=[];
+   for(let k=0;k<sides;k++){
+    const a=k*Math.PI*2/sides+phase,rr=r*rad*edges[k];
+    const px=x+Math.cos(a)*rr,pz=z+Math.sin(a)*rr*stretch;
+    const yy=ground+h*Math.sin(t*Math.PI/2)+h*.035*Math.sin(a*3+phase)*rad;
+    row.push([px,Math.max(floorHeight(px,pz)-.12,yy),pz]);
+   }
+   points.push(row);
+  }
+  for(let j=0;j<rings;j++)for(let k=0;k<sides;k++){
+   const next=(k+1)%sides,snow=j>=4||(j===3&&edges[k]>.94);
+   this.quad(points[j][k],points[j+1][k],points[j+1][next],points[j][next],snow?[.86,.91,.95]:stone,snow?0:3);
+  }
+ }
+ terrain(xs,zs,height){
+   const points=[];for(const z of zs)for(const x of xs){const e=.25;points.push({p:[x,height(x,z),z],n:norm([height(x-e,z)-height(x+e,z),2*e,height(x,z-e)-height(x,z+e)])});}
+   for(let j=0;j<zs.length-1;j++)for(let i=0;i<xs.length-1;i++){let a=j*xs.length+i,b=a+1,c=a+xs.length,d=c+1;for(const k of (zs[1]<zs[0]?[a,b,c,b,d,c]:[a,c,b,b,c,d])){const p=points[k];this.vertex(p.p,p.n,[.89,.94,.98],0);}}
+ }
+}
+
+// The CPU camera and both GPU passes use the same course bend coefficients.
+const curveGLSL=`float curveCenterX(float d){return ${COURSE_CURVES.map(c=>`${c.amp.toFixed(6)}*sin(d*${c.freq.toFixed(6)})`).join('+')};}
+float curveDerivative(float d){return ${COURSE_CURVES.map(c=>`${(c.amp*c.freq).toFixed(6)}*cos(d*${c.freq.toFixed(6)})`).join('+')};}`;
+const rutGLSL=`vec4 rutProfile(float d){
+ const float centers[24]=float[24](${gates.map(g=>g.center.toFixed(6)).join(',')});
+ float firstTarget=(centers[0]+.20)*${WIDTH.toFixed(1)};
+ if(d<=60.){float t=clamp(d/60.,0.,1.),shape=.5-.5*cos(t*3.14159265);return vec4(firstTarget*shape,1.,mix(.45,1.,shape),mix(${RUT.halfNarrow.toFixed(3)},${RUT.halfWide.toFixed(2)},shape));}
+ float lastTarget=(centers[23]-.20)*${WIDTH.toFixed(1)};
+ if(d>=1374.){float t=clamp((d-1374.)/${(FINISH-1374).toFixed(1)},0.,1.),shape=.5-.5*cos(t*3.14159265);return vec4(lastTarget*(1.-shape),-1.,1.-.55*shape,mix(${RUT.halfWide.toFixed(2)},${RUT.halfNarrow.toFixed(3)},shape));}
+ int idx=d<780.?int(clamp(floor((d-60.)/54.),0.,11.)):12+int(clamp(floor((d-780.)/54.),0.,10.));
+ float gateD=idx<12?60.+float(idx)*54.:780.+float(idx-12)*54.;float gap=idx==11?126.:54.;
+ float t=clamp((d-gateD)/gap,0.,1.),shape=.5-.5*cos(t*3.14159265),pulse=abs(cos(t*3.14159265));
+ float side=mod(float(idx),2.)<.5?1.:-1.;float nextSide=-side;
+ float a=(centers[idx]+side*.20)*${WIDTH.toFixed(1)},b=(centers[idx+1]+nextSide*.20)*${WIDTH.toFixed(1)};
+ return vec4(mix(a,b,shape),mix(side,nextSide,shape),.42+.58*pow(pulse,1.4),mix(${RUT.halfNarrow.toFixed(3)},${RUT.halfWide.toFixed(2)},pulse));
+}`;
+const vertexShader=`#version 300 es
+layout(location=0) in vec3 aPosition;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+layout(location=3) in float aMaterial;
+uniform mat4 uVP,uModel,uLight;
+uniform float uBend;
+out vec3 vPosition,vNormal,vColor;out float vMaterial;out vec4 vShadow;
+${curveGLSL}
+void main(){vec4 p=uModel*vec4(aPosition,1.);vec3 n=mat3(uModel)*aNormal;
+if(uBend>.5){p.x+=curveCenterX(-p.z);n=normalize(vec3(n.xy,n.z+curveDerivative(-p.z)*n.x));}
+vPosition=p.xyz;vNormal=n;vColor=aColor;vMaterial=aMaterial;vShadow=uLight*p;gl_Position=uVP*p;}`;
+const fragmentShader=`#version 300 es
+precision highp float;
+in vec3 vPosition,vNormal,vColor;in float vMaterial;in vec4 vShadow;
+uniform vec3 uEye;uniform sampler2D uShadow;uniform float uShadowTexel;out vec4 frag;
+${curveGLSL}
+${rutGLSL}
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float textureNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
+vec3 grade(vec3 c){c=c/(c+vec3(.58));return pow(c,vec3(.4545));}
+void main(){
+ vec3 n=normalize(vNormal);if(!gl_FrontFacing)n=-n;
+ float cameraDistance=distance(uEye,vPosition);
+ float pisteX=vPosition.x-curveCenterX(-vPosition.z);
+ if(vMaterial<.5){float scale=1.-smoothstep(25.,95.,cameraDistance);vec2 p=vPosition.xz*3.;n=normalize(n+vec3(textureNoise(p)-.5,0.,textureNoise(p+17.3)-.5)*.07*scale);}
+ vec3 sun=normalize(vec3(-.38,.34,-.86));float diffuse=max(dot(n,sun),0.);
+ vec3 q=vShadow.xyz/vShadow.w*.5+.5;float shadow=1.;
+ if(q.x>.002&&q.x<.998&&q.y>.002&&q.y<.998&&q.z>0.&&q.z<1.){
+   shadow=0.;float bias=max(.0011*(1.-diffuse),.00018);
+   for(int i=-1;i<=1;i++)for(int j=-1;j<=1;j++)shadow+=q.z-bias<=texture(uShadow,q.xy+vec2(i,j)*uShadowTexel).r?1.:.15;
+   shadow/=9.;
+ }
+ vec3 base=vColor;
+ // World-space materials stay sharp without loading image textures.
+ float detailFade=1.-smoothstep(18.,100.,cameraDistance);
+ if(vMaterial>2.5&&vMaterial<3.5){
+   vec2 rockUV=vec2(vPosition.x+vPosition.z*.73,vPosition.y);
+   float pores=textureNoise(rockUV*18.);
+   float veins=textureNoise(rockUV*vec2(2.,13.));
+   base*=.72+.30*veins+.18*pores*detailFade;
+   n=normalize(n+vec3(pores-.5,textureNoise(rockUV*21.+8.)-.5,veins-.5)*.13*detailFade);
+ }
+ if(vMaterial>3.5&&vMaterial<4.5){
+   vec2 bark=vec2(vPosition.x+vPosition.z,vPosition.y);
+   float grain=textureNoise(bark*vec2(36.,2.));
+   base*=.72+.42*grain;
+ }
+ if(vMaterial>4.5){
+   vec2 weave=vPosition.xy*530.;
+   float weaveFade=1.-smoothstep(.7,3.14,max(fwidth(weave.x),fwidth(weave.y)));
+   base*=1.+sin(weave.x)*sin(weave.y)*.07*weaveFade;
+ }
+ if(vMaterial<.5){
+   float slope=1.-smoothstep(.48,.83,n.y);
+   float grain=textureNoise(vPosition.xz*32.);
+   float strata=.5+.5*sin(vPosition.y*.28+sin(vPosition.x*.05)*3.);
+   float fissure=smoothstep(.38,.68,textureNoise(vPosition.xy*.23+vPosition.z*.045));
+   vec3 stone=mix(vec3(.12,.16,.21),vec3(.33,.32,.30),strata*.60+fissure*.40);
+   base=mix(base,stone,slope*.94);base*=.97+.06*grain*(1.-smoothstep(10.,65.,cameraDistance));
+   float piste=1.-smoothstep(41.,43.,abs(pisteX));
+   float nearFade=1.-smoothstep(12.,65.,distance(uEye,vPosition));
+   float phase=pisteX*86.+sin(vPosition.z*.19)*.2;
+   float groom=sin(phase)*.038*piste*nearFade*(1.-smoothstep(.5,3.14,fwidth(phase)));
+   base+=groom;
+   // Faint existing ski tracks in the groomed snow, filtered at distance.
+   vec4 rut=rutProfile(-vPosition.z);
+   float oldLine=rut.z>0.?rut.x:cos((mod(-vPosition.z,720.)-60.)/54.*3.14159265)*16.2;
+   float trackDistance=abs(abs(pisteX-oldLine)-.17);
+   float trackAA=max(fwidth(trackDistance),.012);
+   float track=(1.-smoothstep(.018,.018+trackAA,trackDistance))*piste;
+   base*=1.-track*.095*smoothstep(0.,30.,-vPosition.z)*(1.-smoothstep(${(FINISH-70).toFixed(1)},${(FINISH-30).toFixed(1)},-vPosition.z));
+   float rutAcross=pisteX-rut.x;
+   float hollow=(1.-smoothstep(rut.w-${RUT.edgeFeather.toFixed(1)},rut.w+${RUT.edgeFeather.toFixed(1)},abs(rutAcross)))*rut.z;
+   float rightWeight=(rut.y+1.)*.5,leftWeight=1.-rightWeight;
+   float snowLip=(rightWeight*exp(-pow((rutAcross-(rut.w+.65))/1.1,2.))+leftWeight*exp(-pow((rutAcross+(rut.w+.65))/1.1,2.)))*rut.z;
+   base=mix(base,vec3(.57,.70,.81),hollow*.34);
+   float scraped=sin(rutAcross*48.+sin(vPosition.z*2.1)*.35);
+   float scrapeAA=1.-smoothstep(.5,3.14,fwidth(rutAcross*48.));
+   base+=vec3(.055)*snowLip+scraped*.018*hollow*nearFade*scrapeAA;
+   float drift=sin(vPosition.x*2.8+sin(vPosition.z*.27)*2.)*.5+.5;
+   base*=1.-drift*.035*(1.-piste)*nearFade;
+   // Blue sprayed dye follows the snow surface: two edges and terrain markers.
+   float courseDistance=-vPosition.z;
+   float courseCenter=sin(courseDistance*.018)*.32;
+   float edgeDistance=abs(abs(pisteX-courseCenter)-(${COURSE_EDGE.toFixed(1)}+sin(courseDistance*.026)*.12));
+   float dyeAA=max(fwidth(edgeDistance),.025);
+   float dyeWidth=.13+textureNoise(vPosition.xz*2.2)*.075;
+   float edgeDye=1.-smoothstep(dyeWidth,dyeWidth+.09+dyeAA,edgeDistance);
+   float sectionDistance=mod(courseDistance,720.);
+   float crestDistance=min(abs(sectionDistance-60.),min(abs(sectionDistance-315.),abs(sectionDistance-580.)));
+   float crestDye=(1.-smoothstep(.12,.26+fwidth(courseDistance),crestDistance))*(1.-smoothstep(${(COURSE_EDGE-.3).toFixed(1)},${(COURSE_EDGE+.2).toFixed(1)},abs(pisteX-courseCenter)));
+   float courseMask=smoothstep(1.,5.,courseDistance)*(1.-smoothstep(${(FINISH-4).toFixed(1)},${FINISH.toFixed(1)},courseDistance))*piste;
+   float dye=max(edgeDye,crestDye*.76)*courseMask;
+   base=mix(base,vec3(.035,.29,.72),dye*(.76+.12*textureNoise(vPosition.xz*8.)));
+ }
+ diffuse=max(dot(n,sun),0.);
+ float hemi=.35+.65*max(n.y,0.);
+ vec3 color=base*(vec3(.23,.37,.54)*hemi+vec3(1.22,1.05,.81)*diffuse*shadow);
+ if(vMaterial>.5&&vMaterial<1.5){float canopy=clamp((vColor.g+vColor.b)*.7,0.,1.);color*=mix(.84,1.,canopy);}
+ float rim=pow(1.-max(dot(n,normalize(uEye-vPosition)),0.),3.);
+ if(vMaterial<.5)color+=vec3(.13,.23,.30)*rim*.22;
+ if(vMaterial<.5){float crystal=step(.994,hash(floor(vPosition.xz*135.)));float shine=pow(max(dot(n,normalize(sun+normalize(uEye-vPosition))),0.),35.);float pixelFade=1.-smoothstep(.35,1.5,length(fwidth(vPosition.xz*135.)));color+=vec3(1.,.91,.75)*crystal*shine*shadow*.24*pixelFade*(1.-smoothstep(4.,36.,cameraDistance));}
+ if(vMaterial>1.5&&vMaterial<2.5)color=base*.9;
+ float dist=distance(uEye,vPosition),fog=1.-exp(-dist*.00063);
+ float sunGlow=pow(max(dot(normalize(vPosition-uEye),sun),0.),8.);
+ float valleyMist=(1.-smoothstep(-265.,-110.,vPosition.y))*smoothstep(150.,900.,dist)*.12;
+ color=mix(color,mix(vec3(.55,.70,.82),vec3(.93,.79,.62),sunGlow*.6),min(.94,fog+valleyMist));
+ frag=vec4(grade(color),1.);
+}`;
+const screenVertex=`#version 300 es
+out vec2 uv;void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);uv=p;gl_Position=vec4(p*2.-1.,1.,1.);}`;
+const skyFragment=`#version 300 es
+precision highp float;in vec2 uv;uniform vec3 uForward,uRight,uUp;uniform float uAspect,uFov;out vec4 frag;
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
+void main(){
+ vec2 p=uv*2.-1.;vec3 ray=normalize(uForward+p.x*uRight*uAspect*uFov+p.y*uUp*uFov);
+ vec3 col=mix(vec3(.86,.86,.82),vec3(.14,.35,.56),pow(max(ray.y,0.),.48));
+ vec3 sun=normalize(vec3(-.38,.34,-.86));float d=length(ray-sun);
+ col+=vec3(1.,.64,.28)*exp(-d*5.5)*.28;
+ col+=vec3(1.,.91,.71)*(1.-smoothstep(.013,.020,d))*2.;
+ if(ray.y>.015){vec2 q=ray.xz/(ray.y+.18)*2.8;float n=noise(q)*.5+noise(q*2.1)*.28+noise(q*4.2)*.14;float cloud=smoothstep(.48,.71,n)*.46*smoothstep(.015,.12,ray.y);vec2 wisps=q*vec2(.7,3.6);cloud+=smoothstep(.57,.79,noise(wisps)*.6+noise(wisps*3.)*.35)*.21;col=mix(col,vec3(.98,.94,.87),cloud);}
+ frag=vec4(col,1.);
+}`;
+const depthVertex=`#version 300 es
+layout(location=0) in vec3 aPosition;uniform mat4 uVP;${curveGLSL}
+void main(){vec3 p=aPosition;p.x+=curveCenterX(-p.z);gl_Position=uVP*vec4(p,1.);}`;
+const depthFragment=`#version 300 es
+precision highp float;void main(){}`;
+
+class AlpineRenderer{
+ constructor(canvas){
+  this.canvas=canvas;const gl=this.gl=canvas.getContext('webgl2',{antialias:true,alpha:false,powerPreference:'high-performance'});
+  if(!gl)throw new Error('3D表示にはWebGL 2対応のブラウザが必要です。');
+  this.scene=this.program(vertexShader,fragmentShader);this.sky=this.program(screenVertex,skyFragment);this.depth=this.program(depthVertex,depthFragment);
+  this.empty=gl.createVertexArray();this.model=identity();this.frame=0;this.bank=0;this.shadowZ=Infinity;
+  this.maxTexture=gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096;
+  this.maxRenderbuffer=gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)||4096;
+  this.maxViewport=gl.getParameter(gl.MAX_VIEWPORT_DIMS)||[4096,4096];
+  this.quality='high';this.shadowSize=Math.min(3072,this.maxTexture);
+  this.meshes=[];this.distant=[];this.treeGroups=[];this.sceneryRocks=[];this.buildWorld();this.randomizeSceneryRocks();
+  try{this.setupShadow();}catch{this.quality='standard';this.shadowSize=Math.min(1536,this.maxTexture);this.setupShadow();}
+  this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.lost=true;canvas.dispatchEvent(new CustomEvent('scene-error',{detail:'3D表示が停止しました。ページを再読み込みしてください。'}));});
+ }
+ program(v,f){const gl=this.gl,p=gl.createProgram();for(const [type,source]of [[gl.VERTEX_SHADER,v],[gl.FRAGMENT_SHADER,f]]){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));gl.attachShader(p,s);gl.deleteShader(s);}gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return {p,u:new Map()};}
+ location(program,key){if(!program.u.has(key))program.u.set(key,this.gl.getUniformLocation(program.p,key));return program.u.get(key);}
+ mesh(geometry,min=-Infinity,max=Infinity){const gl=this.gl,vao=gl.createVertexArray(),buffer=gl.createBuffer();gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(geometry.data),gl.STATIC_DRAW);for(let i=0;i<4;i++){gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,i===3?1:3,gl.FLOAT,false,40,i*12);}return {vao,buffer,count:geometry.data.length/10,min,max};}
+ buildWorld(){
+  let seed=912;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const xs=[];for(let x=-200;x<-44;x+=4)xs.push(x);for(let x=-44;x<44;x+=.5)xs.push(x);for(let x=44;x<=200;x+=4)xs.push(x);
+  for(let section=-1;section<Math.ceil((FINISH+100)/150);section++){
+   const from=section*150,to=from+150,geo=new Geometry(),zs=[],trees=[];
+   this.treeGroups.push({from,to,trees});
+   for(let d=from;d<=to;d+=1.5)zs.push(-d);geo.terrain(xs,zs,floorHeight);
+   for(let i=0;i<96;i++){
+    const z=-mix(from,to,random()),x=(i%2?-1:1)*(47+Math.pow(random(),1.8)*103),y=floorHeight(x,z),h=4.5+Math.pow(random(),.7)*9,r=h*(.14+random()*.065);
+    if(Math.abs(x)<65)trees.push({x,z});
+    if(Math.abs(x)<52){
+     const leanX=(random()-.5)*h*.05,leanZ=(random()-.5)*h*.04,bark=[.19,.135,.085];
+     const stem=t=>[x+leanX*t*t,y+h*t,z+leanZ*t*t];
+     for(let j=0;j<5;j++)geo.limb(stem(j/5),stem((j+1)/5),h*.023*(1-j/5),Math.max(.014,h*.023*(1-(j+1)/5)),bark);
+     const rotation=random()*Math.PI*2;
+     // Asymmetric branch whorls, drooping ends, and exposed needles under snow.
+     for(let layer=0;layer<8;layer++){
+      const t=.14+layer*.105,root=stem(t),count=layer>5?6:8;
+      for(let b=0;b<count;b++){
+       if(layer<2&&random()<.12)continue;
+       const angle=rotation+layer*1.71+b*Math.PI*2/count+(random()-.5)*.24;
+       const length=r*Math.pow(1-t,1.02)*(1.20+random()*.48),dx=Math.cos(angle),dz=Math.sin(angle);
+       const by=root[1]+(random()-.5)*h*.025,green=[.035+random()*.025,.09+random()*.055,.065+random()*.035];
+       const tip=[root[0]+dx*length,by-length*.20,root[2]+dz*length];
+       geo.limb([root[0],by,root[2]],tip,.038*(1-t)+.009,.007,bark);
+       geo.bough(root[0],by,root[2],angle,length,length*.18,green);
+       geo.bough(root[0]-.025,by+.10,root[2],angle,length*.82,length*.14,[.84,.90,.94]);
+       for(let f=1;f<=3;f++)for(const side of [-1,1]){
+        const along=length*f*.24,tx=root[0]+dx*along,tz=root[2]+dz*along,ty=by-along*.18;
+        const twig=length*(.43-f*.065)*( .85+random()*.3),a=angle+side*(.65+random()*.3);
+        geo.bough(tx,ty,tz,a,twig,twig*.28,green);
+        if(random()<.83)geo.bough(tx-.02,ty+.055,tz,a,twig*.82,twig*.22,[.83,.90,.94]);
+        // Thin hanging needle tips give each branch an irregular edge.
+        const ex=tx+Math.cos(a)*twig,ez=tz+Math.sin(a)*twig;
+        geo.tri([ex-.045,ty-twig*.12,ez],[ex+.045,ty-twig*.12,ez],[ex,ty-twig*.32-.11,ez+.025],green);
+       }
+      }
+     }
+     const top=stem(.91);geo.cone(top[0],top[1],top[2],r*.13,h*.10,[.055,.13,.09],rotation);
+    }else{
+     geo.cylinder(x,y,z,.15,h*.80,[.17,.13,.095],4,8);
+     for(let j=0;j<7;j++){const yy=y+h*(.09+j*.11),rr=r*(1-j*.12),rot=random()*3;
+      geo.cone(x,yy,z,rr,h*.27,[.045,.11,.085],rot);
+      geo.cone(x-.035,yy+h*.05,z,rr*.77,h*.24,[.81,.88,.92],rot);
+     }
+    }
+   }
+   for(let d=Math.max(0,from);d<to&&d<FINISH;d+=18)for(const side of [-1,1]){
+    const x=side*(COURSE_EDGE+.7),z=-d,y=floorHeight(x,z);geo.box(x,y,z,.04,1.2,.04,[.16,.27,.32]);geo.box(x,y+.82,z,.048,.25,.048,[.90,.41,.20]);
+   }
+   // Red safety mesh on both sides. Real gaps reveal the trees behind it.
+   for(let d=Math.ceil(Math.max(0,from)/6)*6;d<Math.min(to,FINISH);d+=6)for(const side of [-1,1]){
+    const red=[.92,.035,.025],netX=dd=>side*netHalfWidth(dd);
+    const point=(offset,height)=>{const dd=d+offset,x=netX(dd);return [x,floorHeight(x,-dd)+height-Math.sin(offset/6*Math.PI)*.12,-dd];};
+    geo.cylinder(netX(d),floorHeight(netX(d),-d),-d,.055,2.0,red,1,8);
+    for(let row=0;row<=8;row++)for(let k=0;k<6;k++){
+     const yy=.20+row*.20,thick=row===8?.075:.025;
+     geo.quad(point(k,yy),point(k+1,yy),point(k+1,yy+thick),point(k,yy+thick),red);
+    }
+    for(let k=0;k<12;k++){
+     const dd=k*.5;geo.quad(point(dd,.20),point(dd+.022,.20),point(dd+.022,1.85),point(dd,1.85),red);
+    }
+    if(d+6===FINISH)geo.cylinder(netX(FINISH),floorHeight(netX(FINISH),-FINISH),-FINISH,.055,2.0,red,1,8);
+   }
+   this.meshes.push(this.mesh(geo,from,to));
+  }
+  // Distant mountain ridges: actual rugged meshes, not a background image.
+  const peaks=[[-1800,-2250,1100,790],[-800,-2550,1000,840],[180,-2700,1100,910],[1400,-2600,1100,860],[-990,-900,560,360],[-560,-1050,550,430],[-120,-1320,540,390],[360,-1390,600,590],[850,-1050,640,470],[-1600,-1600,900,670],[1100,-2200,1200,710]];
+  for(const [cx,originalZ,rad,tall]of peaks){
+   const cz=originalZ-(Math.abs(cx)<rad+120&&originalZ>-2000?FINISH-720:0);
+   const geo=new Geometry(),xs=[],zs=[],resolution=cz<-2200?72:128;for(let i=0;i<=resolution;i++){xs.push(cx-rad+2*rad*i/resolution);zs.push(cz-rad+2*rad*i/resolution);}
+   const mountain=(x,z)=>{const dx=(x-cx)/rad,dz=(z-cz)/rad,r=Math.hypot(dx,dz),envelope=Math.pow(Math.max(0,1-r),1.3);const rough=fbm(x*.009,z*.009),ridges=1-Math.abs(noise(x*.028,z*.024)*2-1),angle=Math.atan2(dz,dx),spurs=(.5+.5*Math.cos(angle*7+rough*2))*r*envelope*110;return -255+envelope*tall*(.72+rough*.54)+Math.pow(envelope,.7)*ridges*48+spurs;};
+   geo.terrain(xs,zs,mountain);this.distant.push(this.mesh(geo));
+  }
+  const gateGeometry=new Geometry();
+  for(const gate of gates){
+   const x=gate.center*WIDTH,z=-gate.distance,c=gate.color==='red'?[.88,.08,.10]:[.035,.26,.76],y=floorHeight(x,z),half=FLAG_WIDTH*WIDTH/2;
+   for(const side of [-1,1])gateGeometry.cylinder(x+side*half,floorHeight(x+side*half,z),z,.086,3.70,c);
+   for(let n=0;n<24;n++){
+    const a=x-half+n*half*2/24,b=a+half*2/24,za=z+Math.sin(n*.24)*.13,zb=z+Math.sin((n+1)*.24)*.13;
+    gateGeometry.quad([a,y+1.70,za],[b,y+1.70,zb],[b,y+3.40,zb],[a,y+3.40,za],c,5);
+   }
+   // The arrow is a course-specific cue: red/right, blue/left.
+   const tip=x+gate.side*.62,tail=x-gate.side*.44,white=[.98,.98,.95];
+   gateGeometry.tri([tip,y+2.54,z+.18],[x,y+3.06,z+.18],[x,y+2.02,z+.18],white);
+   gateGeometry.quad([tail,y+2.40,z+.18],[x,y+2.40,z+.18],[x,y+2.68,z+.18],[tail,y+2.68,z+.18],white);
+   // A small painted chevron lies on the correct side of the flag.
+   const ax=x+gate.side*1.95,az=z+5,mark=(px,pz)=>[px,floorHeight(px,pz)+.018,pz];
+   gateGeometry.tri(mark(ax-gate.side*.50,az+.35),mark(ax+gate.side*.55,az),mark(ax-gate.side*.50,az-.35),c);
+  }
+  const fy=floorHeight(0,-FINISH);
+  for(const x of [-FINISH_HALF,FINISH_HALF])gateGeometry.box(x,floorHeight(x,-FINISH),-FINISH,.14,4.8,.14,[.11,.20,.24]);
+  gateGeometry.box(0,fy+4.0,-FINISH,FINISH_HALF+.1,.8,.07,[.93,.95,.94]);
+  for(let i=0;i<104;i++)for(let j=0;j<2;j++)if((i+j)%2===0)gateGeometry.box(-41.6+i*.8,fy+4+j*.4,-FINISH+.09,.4,.4,.018,[.055,.09,.12]);
+  // Timber chalet beyond the finish, with snow roof and warm glazing.
+  const cx=54,cz=-FINISH-50,cy=floorHeight(cx,cz),wood=[.22,.13,.085];
+  gateGeometry.box(cx,cy,cz,5,4,3.4,wood,4);
+  for(let i=0;i<14;i++)gateGeometry.box(cx,cy+i*.28,cz+3.42,5,.024,.026,[.115,.07,.045],4);
+  for(const side of [-1,1])gateGeometry.quad([cx,cy+7,cz-4],[cx+side*6,cy+3.7,cz-4],[cx+side*6,cy+3.7,cz+4],[cx,cy+7,cz+4],[.9,.94,.97]);
+  for(const x of [-3,0,3]){
+   gateGeometry.box(cx+x,cy+1.14,cz+3.47,.90,1.64,.04,[.11,.085,.065],4);
+   gateGeometry.box(cx+x,cy+1.2,cz+3.52,.8,1.5,.025,[1,.62,.24],2);
+   gateGeometry.box(cx+x,cy+1.2,cz+3.56,.035,1.5,.025,wood,4);
+   gateGeometry.box(cx+x,cy+1.92,cz+3.56,.8,.055,.025,wood,4);
+   gateGeometry.box(cx+x,cy+1.10,cz+3.58,1,.085,.14,[.88,.93,.97]);
+  }
+  gateGeometry.box(cx+2,cy+5.5,cz-1,.43,2,.43,[.27,.25,.24],3);
+  gateGeometry.box(cx+2,cy+7.5,cz-1,.53,.12,.53,[.91,.94,.96]);
+  this.objects=this.mesh(gateGeometry);
+  const skis=new Geometry();
+  for(const side of [-1,1]){
+   const cx=side*.24,sections=[[.28,.078,.04],[-.35,.075,.04],[-.9,.084,.045],[-1.35,.095,.09],[-1.63,.079,.22],[-1.72,.025,.29]];
+   for(let i=0;i<sections.length-1;i++){
+    const [z0,w0,y0]=sections[i],[z1,w1,y1]=sections[i+1];
+    skis.quad([cx-w0,y0,z0],[cx+w0,y0,z0],[cx+w1,y1,z1],[cx-w1,y1,z1],i>2?[.94,.28,.10]:[.025,.09,.12]);
+    for(const s of [-1,1])skis.quad([cx+s*w0,y0,z0],[cx+s*w1,y1,z1],[cx+s*w1,y1-.025,z1],[cx+s*w0,y0-.025,z0],[.52,.62,.69]);
+   }
+   skis.box(cx,.05,-.12,.058,.14,.18,[.09,.11,.13]);
+  }
+  this.skis=this.mesh(skis);
+ }
+ randomizeSceneryRocks(){
+  const gl=this.gl;
+  for(const mesh of this.sceneryRocks){gl.deleteBuffer(mesh.buffer);gl.deleteVertexArray(mesh.vao);}
+  this.sceneryRocks=[];
+  for(const {from,to,trees} of this.treeGroups){
+   const geo=new Geometry(),placed=[];
+   for(const tree of trees){
+    if(Math.random()>.38)continue;
+    const r=.6+Math.random()*1.65,h=r*(.65+Math.random()*.6),a=Math.random()*Math.PI*2;
+    const offset=r+1.1+Math.random()*1.8,z=tree.z+Math.sin(a)*offset;
+    const x=tree.x+Math.cos(a)*offset;
+    // Entire rock stays beyond the maximum net width, with three metres to spare.
+    if(Math.abs(x)-r*1.08<netHalfWidth(-z)+3||-z<from||-z>to)continue;
+    if(trees.some(t=>Math.hypot(t.x-x,t.z-z)<r*1.08+.5))continue;
+    if(placed.some(p=>Math.hypot(p.x-x,p.z-z)<r+p.r+.5))continue;
+    if(Math.abs(x-54)<8+r&&Math.abs(z+FINISH+50)<7+r)continue;
+    geo.boulder(x,z,r,h,Math.random);placed.push({x,z,r});
+   }
+   if(geo.data.length)this.sceneryRocks.push(this.mesh(geo,from,to));
+  }
+  this.shadowZ=Infinity;this.stillKey=null;
+ }
+ setupShadow(){
+  const gl=this.gl;this.shadow=this.shadow||gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,this.shadow);gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT24,this.shadowSize,this.shadowSize,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  this.shadowFB=this.shadowFB||gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,this.shadowFB);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,this.shadow,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);
+  if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('雪山の影を描画できませんでした。');gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+ }
+ setQuality(quality){
+  if(!['high','standard'].includes(quality))throw new Error('Unknown quality');
+  if(this.quality===quality)return;
+  const previous=this.quality,previousSize=this.shadowSize;
+  this.quality=quality;this.shadowSize=Math.min(quality==='high'?3072:1536,this.maxTexture);
+  try{this.setupShadow();}catch(error){this.quality=previous;this.shadowSize=previousSize;this.setupShadow();throw error;}
+  finally{this.shadowZ=Infinity;this.stillKey=null;}
+ }
+ resize(){
+  const c=this.canvas,r=c.getBoundingClientRect(),width=Math.max(1,r.width),height=Math.max(1,r.height);
+  const high=this.quality==='high',budget=high?6000000:2500000;
+  // Native Retina pixels, bounded for external displays and mobile GPUs.
+  const dpr=Math.min(window.devicePixelRatio||1,high?2.5:1.25,Math.sqrt(budget/(width*height)),this.maxRenderbuffer/width,this.maxRenderbuffer/height,this.maxViewport[0]/width,this.maxViewport[1]/height);
+  const w=Math.max(1,Math.floor(width*dpr)),h=Math.max(1,Math.floor(height*dpr));
+  if(c.width!==w||c.height!==h){c.width=w;c.height=h;}
+ }
+ draw(mesh){const gl=this.gl;gl.bindVertexArray(mesh.vao);gl.drawArrays(gl.TRIANGLES,0,mesh.count);}
+ render(run){
+  if(this.lost)return;this.resize();
+  const falling=run.state==='dnf',fall=falling?smooth(0,1.1,run.crashTime):0;
+  const slide=falling&&!this.reduced?Math.min(5,run.crashSpeed*.065)*(1-Math.exp(-run.crashTime*3)):0;
+  const gl=this.gl,c=this.canvas,x=run.x*WIDTH,z=-run.distance-slide,ground=floorHeight(x,z),moving=run.state==='running';
+  const stillKey=[x,z,run.state,run.crashTime,c.width,c.height].join(':');if(!moving&&this.stillKey===stillKey)return;this.stillKey=stillKey;
+  const lateral=run.velocityX/SPEED_SCALE;
+  // Roll into the turn, up to about 17 degrees, with a smooth return upright.
+  const bankTarget=clamp(-lateral*.16,-.30,.30);
+  this.bank+=(bankTarget-this.bank)*.12;
+  const bump=moving&&!this.reduced?Math.sin(run.elapsed*8)*.012:0;
+  const cameraDistance=-z,worldX=x+curveCenter(cameraDistance),eye=[worldX,ground+1.58+bump-fall*(this.reduced?.35:1.23),z];
+  const localPitch=(floorHeight(x,z-3)-floorHeight(x,z+3))/6;
+  const aim=[x+curveCenter(cameraDistance+25)+lateral*.36,eye[1]+localPitch*25+1.8-fall*3,z-25];
+  const roll=this.bank+(falling?run.crashSide*fall*1.12:0);
+  const forward=norm(sub(aim,eye)),up=this.reduced?[0,1,0]:[Math.sin(roll),Math.cos(roll),0],right=norm(cross(forward,up)),cameraUp=cross(right,forward);
+  const fov=Math.min(82,72+run.speed*run.speedMultiplier*.16)*Math.PI/180;
+  const vp=multiply(perspective(fov,c.width/c.height,.055,3900),view(eye,aim,up));
+  const center=[curveCenter(run.distance+40),floorHeight(0,z-40),z-40];
+  if(Math.abs(this.shadowZ-z)>3||!this.light){
+   this.shadowZ=z;this.light=multiply(ortho(88),view(center.map((v,i)=>v+SUN[i]*220),center));
+   gl.bindFramebuffer(gl.FRAMEBUFFER,this.shadowFB);gl.viewport(0,0,this.shadowSize,this.shadowSize);gl.enable(gl.DEPTH_TEST);gl.clear(gl.DEPTH_BUFFER_BIT);gl.useProgram(this.depth.p);gl.uniformMatrix4fv(this.location(this.depth,'uVP'),false,this.light);
+   for(const mesh of this.meshes)if(mesh.max>run.distance-110&&mesh.min<run.distance+155)this.draw(mesh);this.draw(this.objects);
+   for(const mesh of this.sceneryRocks)if(mesh.max>run.distance-110&&mesh.min<run.distance+155)this.draw(mesh);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,c.width,c.height);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.disable(gl.DEPTH_TEST);
+  gl.useProgram(this.sky.p);gl.uniform3fv(this.location(this.sky,'uForward'),forward);gl.uniform3fv(this.location(this.sky,'uRight'),right);gl.uniform3fv(this.location(this.sky,'uUp'),cameraUp);gl.uniform1f(this.location(this.sky,'uAspect'),c.width/c.height);gl.uniform1f(this.location(this.sky,'uFov'),Math.tan(fov/2));gl.bindVertexArray(this.empty);gl.drawArrays(gl.TRIANGLES,0,3);
+  gl.enable(gl.DEPTH_TEST);gl.useProgram(this.scene.p);gl.uniformMatrix4fv(this.location(this.scene,'uVP'),false,vp);gl.uniformMatrix4fv(this.location(this.scene,'uModel'),false,this.model);gl.uniformMatrix4fv(this.location(this.scene,'uLight'),false,this.light);gl.uniform3fv(this.location(this.scene,'uEye'),eye);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.shadow);gl.uniform1i(this.location(this.scene,'uShadow'),0);
+  gl.uniform1f(this.location(this.scene,'uShadowTexel'),1/this.shadowSize);
+  gl.uniform1f(this.location(this.scene,'uBend'),0.);
+  for(const mesh of this.distant)this.draw(mesh);
+  gl.uniform1f(this.location(this.scene,'uBend'),1.);
+  for(const mesh of this.meshes)if(mesh.max>run.distance-30)this.draw(mesh);this.draw(this.objects);
+  for(const mesh of this.sceneryRocks)if(mesh.max>run.distance-30)this.draw(mesh);
+  const skiPitch=(floorHeight(x,z-1)-floorHeight(x,z+1))/2;
+  const skiYaw=run.skiSteer*.48+clamp(lateral*.13,-.35,.35);
+  const skiForward=norm([curveSlope(cameraDistance)+skiYaw+fall*run.crashSide*.75,skiPitch+fall*.5,-1]),skiRight=norm(cross(skiForward,[0,1,0])),skiUp=cross(skiRight,skiForward);
+  const m=new Float32Array([...skiRight,0,...skiUp,0,...skiForward.map(v=>-v),0,worldX,ground+.045,z-.15,1]);
+  gl.uniform1f(this.location(this.scene,'uBend'),0.);gl.uniformMatrix4fv(this.location(this.scene,'uModel'),false,m);this.draw(this.skis);
+ }
+}
+globalThis.AlpineRenderer=AlpineRenderer;
+})();
+
+</script><script>
+/* Original procedural soundtrack and ski effects; no downloaded audio. */
+(()=>{'use strict';
+class AlpineAudio{
+ constructor(){this.enabled=true;this.playing=false;this.nodes=new Set();this.timer=null;}
+ init(){
+  const Audio=window.AudioContext||window.webkitAudioContext;
+  if(!Audio)return false;
+  if(!this.ctx){
+   this.ctx=new Audio();this.master=this.ctx.createGain();this.master.gain.value=.38;this.master.connect(this.ctx.destination);
+   this.music=this.ctx.createGain();this.music.gain.value=.52;this.music.connect(this.master);
+   this.effects=this.ctx.createGain();this.effects.gain.value=.8;this.effects.connect(this.master);
+   this.noise=this.ctx.createBuffer(1,this.ctx.sampleRate*2,this.ctx.sampleRate);
+   const data=this.noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+  }
+  if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});
+  return true;
+ }
+ tone(freq,time,duration,volume,type='sine',destination=this.music,endFreq=null){
+  const ac=this.ctx,osc=ac.createOscillator(),amp=ac.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(freq,time);
+  if(endFreq)osc.frequency.exponentialRampToValueAtTime(endFreq,time+duration);
+  amp.gain.setValueAtTime(.0001,time);amp.gain.exponentialRampToValueAtTime(volume,time+.008);
+  amp.gain.exponentialRampToValueAtTime(.0001,time+duration);
+  osc.connect(amp);amp.connect(destination);
+  if(destination===this.music)this.nodes.add(osc);
+  osc.onended=()=>{this.nodes.delete(osc);osc.disconnect();amp.disconnect();};
+  osc.start(time);osc.stop(time+duration+.02);
+ }
+ hiss(time,duration,volume,frequency,type='highpass',destination=this.effects){
+  const ac=this.ctx,source=ac.createBufferSource(),filter=ac.createBiquadFilter(),amp=ac.createGain();
+  source.buffer=this.noise;filter.type=type;filter.frequency.value=frequency;
+  amp.gain.setValueAtTime(volume,time);amp.gain.exponentialRampToValueAtTime(.0001,time+duration);
+  source.connect(filter);filter.connect(amp);amp.connect(destination);
+  if(destination===this.music)this.nodes.add(source);
+  source.onended=()=>{this.nodes.delete(source);source.disconnect();filter.disconnect();amp.disconnect();};
+  source.start(time);source.stop(time+duration+.02);
+ }
+ play(kind){
+  try{
+   if(!this.init())return;const t=this.ctx.currentTime;
+   if(kind==='pole'){
+    this.hiss(t,.055,.48,1450,'bandpass');
+    this.tone(390,t,.19,.22,'triangle',this.effects,85);
+    this.tone(180,t+.04,.13,.12,'sine',this.effects,70);
+   }else if(kind==='dnf'){
+    this.hiss(t,.8,.45,850,'lowpass');this.tone(100,t,.27,.36,'sine',this.effects,32);
+   }else if(kind==='finish'){
+    [523.25,659.25,783.99,1046.5].forEach((f,i)=>this.tone(f,t+i*.1,.4,.17,'sine',this.effects));
+   }else this.tone(kind==='gate'?740:440,t,.19,.10,'sine',this.effects);
+  }catch{}
+ }
+ start(){
+  this.stop();if(!this.enabled)return;
+  try{if(!this.init())return;this.playing=true;this.beat=0;this.next=this.ctx.currentTime+.05;
+   this.schedule();this.timer=setInterval(()=>this.schedule(),80);
+  }catch{this.stop();}
+ }
+ schedule(){
+  if(!this.playing)return;
+  const ac=this.ctx;if(this.next<ac.currentTime-.2)this.next=ac.currentTime+.03;
+  // 124 BPM: original minor-key arpeggio, soft bass, kick and hi-hat.
+  const chords=[[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,65]],sequence=[0,2,1,3,2,1,3,2];
+  const hz=n=>440*Math.pow(2,(n-69)/12),step=60/124/2;
+  while(this.next<ac.currentTime+.18){
+   const n=this.beat,chord=chords[Math.floor(n/16)%4],t=this.next;
+   this.tone(hz(chord[sequence[n%8]]+12),t,.29,.09,'sine');
+   if(n%4===0)this.tone(hz(chord[0]-12),t,.62,.16,'triangle');
+   if(n%2===0)this.tone(135,t,.16,.27,'sine',this.music,42);
+   if(n%4===2)this.hiss(t,.09,.085,1500,'bandpass',this.music);
+   this.hiss(t,.035,n%2?.045:.025,6500,'highpass',this.music);
+   this.next+=step;this.beat++;
+  }
+ }
+ stop(){
+  this.playing=false;if(this.timer!==null)clearInterval(this.timer);this.timer=null;
+  for(const node of this.nodes){try{node.stop();}catch{}}this.nodes.clear();
+ }
+}
+globalThis.AlpineAudio=AlpineAudio;
+})();
+
+</script><script>
+(()=>{'use strict';
+const {SkiRun,gates,clamp,slopeDegrees}=globalThis.FestivalSkiCore;
+const root=document.getElementById('festival-ski'),canvas=document.getElementById('course'),run=new SkiRun();
+const byId=id=>document.getElementById(id);
+const ui={time:byId('time'),speed:byId('speed'),gates:byId('gates'),score:byId('score'),call:byId('commentary'),overlay:byId('overlay'),title:byId('overlay-title'),copy:byId('overlay-copy'),start:byId('start'),pause:byId('pause'),saveBox:byId('save-score'),name:byId('player-name'),save:byId('save'),ranking:byId('ranking'),tilt:byId('tilt'),progress:byId('progress'),distance:byId('remaining')};
+const keyboard=new Set(),touch=new Set();
+let tiltValue=0,tiltEnabled=false,tiltListening=false,saved=false,last=performance.now(),acc=0,eventObject=null,eventUntil=0,renderer,activeSensitivity=1,activeSpeedMultiplier=1;
+let dnfShown=false;
+const audio=new AlpineAudio();
+const STORAGE='festival-ski-ranking-sensitivity-v15',FIXED=1/120;
+try{renderer=new AlpineRenderer(canvas);}catch(e){ui.copy.textContent='3D表示を準備できませんでした。WebGL 2対応のブラウザで開いてください。';ui.call.textContent=e.message;ui.call.dataset.kind='error';ui.start.disabled=true;return;}
+const qualityButton=byId('quality');
+function updateQualityButton(){
+ const high=renderer.quality==='high';qualityButton.textContent=high?'画質：高':'画質：標準';
+ qualityButton.setAttribute('aria-label',high?'高精細画質。押すと標準画質に切り替え':'標準画質。押すと高精細画質に切り替え');
+}
+try{if(localStorage.getItem('festival-ski-visual-quality')==='standard')renderer.setQuality('standard');}catch{}
+updateQualityButton();
+qualityButton.addEventListener('click',()=>{
+ try{renderer.setQuality(renderer.quality==='high'?'standard':'high');updateQualityButton();
+  try{localStorage.setItem('festival-ski-visual-quality',renderer.quality);}catch{}
+ }catch{ui.call.textContent='画質を切り替えられませんでした。ページを再読み込みしてください。';ui.call.dataset.kind='error';}
+ clearInput();root.focus({preventScroll:true});last=performance.now();acc=0;
+});
+const sensitivitySelect=byId('sensitivity'),allowedSensitivity=new Set(['0.5','1','1.5','2']);
+try{const stored=localStorage.getItem('festival-ski-sensitivity');if(allowedSensitivity.has(stored))sensitivitySelect.value=stored;}catch{}
+sensitivitySelect.addEventListener('change',()=>{try{localStorage.setItem('festival-ski-sensitivity',sensitivitySelect.value);}catch{}});
+const speedSelect=byId('speed-multiplier'),allowedSpeed=new Set(['1','1.5','2']);
+try{const stored=localStorage.getItem('festival-ski-speed');if(allowedSpeed.has(stored))speedSelect.value=stored;}catch{}
+speedSelect.addEventListener('change',()=>{try{localStorage.setItem('festival-ski-speed',speedSelect.value);}catch{}});
+function sound(kind){audio.play(kind);}
+const musicButton=byId('music');
+try{audio.enabled=localStorage.getItem('festival-ski-music')!=='off';}catch{}
+function musicLabel(){musicButton.textContent=audio.enabled?'BGM：ON':'BGM：OFF';musicButton.setAttribute('aria-pressed',String(audio.enabled));}
+musicLabel();
+musicButton.addEventListener('click',()=>{
+ audio.enabled=!audio.enabled;musicLabel();
+ try{localStorage.setItem('festival-ski-music',audio.enabled?'on':'off');}catch{}
+ if(audio.enabled&&run.state==='running')audio.start();else audio.stop();
+});
+function clearInput(){keyboard.clear();touch.clear();tiltValue=0;root.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));}
+function updateUi(now){
+ ui.time.textContent=run.totalTime.toFixed(1);ui.speed.textContent=Math.round(run.speed*run.speedMultiplier*3.6);ui.gates.textContent=`${run.gatesPassed} / ${gates.length}`;ui.score.textContent=String(run.score);ui.progress.style.width=`${run.progress*100}%`;ui.distance.textContent=`${Math.ceil(run.remaining)} m`;
+ byId('slope').textContent=Math.round(slopeDegrees(run.distance));
+ const drive=byId('drive-state'),turning=run.turnLoad>.18;
+ drive.textContent=run.state!=='running'?'':run.snowLoad>.15?'深雪で減速':turning?(run.acceleration<-.15?(run.turnBrakeMultiplier>=2?'強いターン減速':'ターン減速'):'カービング'):run.acceleration>.15?'加速中':run.acceleration<-.15?'自然減速':'巡航';drive.dataset.mode=run.snowLoad>.15?'rut':turning?'turn':'straight';
+ if(run.event!==eventObject){eventObject=run.event;eventUntil=now+1800;ui.call.textContent=run.event.text;ui.call.dataset.kind=run.event.type;if(['gate','dnf','finish'].includes(run.event.type))sound(run.event.type);}
+ ui.call.classList.toggle('visible',now<eventUntil&&run.state==='running'||run.state==='paused');
+ const next=gates.find(g=>!run.processedGates.has(g.id));byId('next-gate').textContent=run.state==='paused'?'PAUSED':next?`${next.side>0?'赤の右側 →':'← 青の左側'}  /  ${Math.max(0,Math.ceil(next.distance-run.distance))} m`:'FINISH AHEAD';byId('next-gate').dataset.side=next?.color||'';
+}
+function begin(){
+ if(renderer.lost)return;
+ activeSensitivity=Number(sensitivitySelect.value)||1;activeSpeedMultiplier=Number(speedSelect.value)||1;sensitivitySelect.disabled=true;speedSelect.disabled=true;
+ dnfShown=false;root.classList.remove('crashing');audio.start();
+ if(!renderer.lost)renderer.randomizeSceneryRocks();
+ if(renderer.lost)return;clearInput();run.start();eventObject=null;saved=false;ui.save.disabled=false;ui.save.textContent='記録を残す';ui.overlay.hidden=true;ui.saveBox.hidden=true;ui.pause.disabled=false;ui.pause.textContent='一時停止';root.classList.remove('finished','dnf');root.classList.add('playing');root.focus({preventScroll:true});byId('ranking-panel').hidden=true;last=performance.now();acc=0;sound('start');
+}
+function finish(){
+ audio.stop();sensitivitySelect.disabled=false;speedSelect.disabled=false;
+ clearInput();ui.overlay.hidden=false;ui.saveBox.hidden=false;ui.title.textContent='FINISH.';ui.copy.textContent=`${run.totalTime.toFixed(2)} 秒\nゲート ${run.gatesPassed}/${gates.length}　·　${run.score} pts`;
+ ui.start.textContent='もう一度、山頂へ';ui.pause.disabled=true;root.classList.remove('playing');root.classList.add('finished');renderRanking();ui.name.focus({preventScroll:true});
+}
+function showDnf(){
+ dnfShown=true;root.classList.remove('crashing');sensitivitySelect.disabled=false;speedSelect.disabled=false;
+ clearInput();ui.overlay.hidden=false;ui.saveBox.hidden=true;ui.title.textContent='DNF.';
+ ui.copy.textContent=`${run.dnfReason}でリタイア。\n走行 ${Math.round(run.distance)} m　·　${run.elapsed.toFixed(2)} 秒\n通過ゲート ${run.gatesPassed}/${gates.length}`;
+ ui.start.textContent='もう一度挑戦する';ui.pause.disabled=true;
+ root.classList.remove('playing');root.classList.add('finished','dnf');ui.start.focus({preventScroll:true});
+}
+function togglePause(){
+ if(run.state==='running'){run.pause();audio.stop();clearInput();ui.pause.textContent='再開';ui.call.textContent='一時停止中';ui.call.dataset.kind='paused';}
+ else if(run.state==='paused'){run.resume();audio.start();ui.pause.textContent='一時停止';eventObject=null;last=performance.now();acc=0;root.focus({preventScroll:true});}
+}
+function ranks(){try{
+ const data=JSON.parse(localStorage.getItem(STORAGE)||'[]');return Array.isArray(data)?data.filter(r=>r&&typeof r.name==='string'&&Number.isFinite(r.time)&&r.time>0&&Number.isFinite(r.score)).sort((a,b)=>a.time-b.time||b.score-a.score).slice(0,20):[];
+}catch{return [];}}
+function renderRanking(){
+ ui.ranking.replaceChildren();const data=ranks();if(!data.length){const li=document.createElement('li');li.className='empty';li.textContent='最初の記録を、ここに。';ui.ranking.append(li);}
+ data.slice(0,5).forEach((r,i)=>{const li=document.createElement('li'),name=document.createElement('span'),time=document.createElement('strong');name.textContent=`${String(i+1).padStart(2,'0')}  ${r.name} · 感${r.sensitivity||1}× 速${r.speedMultiplier||1}×`;time.textContent=`${r.time.toFixed(2)} s`;li.append(name,time);ui.ranking.append(li);});
+}
+function saveScore(){
+ if(run.state!=='finished'||saved)return;const data=ranks();data.push({name:(ui.name.value.trim()||'挑戦者').slice(0,12),time:run.totalTime,score:run.score,sensitivity:activeSensitivity,speedMultiplier:activeSpeedMultiplier,date:Date.now()});data.sort((a,b)=>a.time-b.time||b.score-a.score);
+ try{localStorage.setItem(STORAGE,JSON.stringify(data.slice(0,20)));saved=true;ui.save.disabled=true;ui.save.textContent='保存しました';renderRanking();}
+ catch{ui.save.textContent='保存できませんでした';}
+}
+function bindHold(button,key){
+ button.addEventListener('pointerdown',e=>{if(run.state!=='running')return;e.preventDefault();button.setPointerCapture(e.pointerId);touch.add(key);button.classList.add('pressed');});
+ const release=()=>{touch.delete(key);button.classList.remove('pressed');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
+}
+async function enableTilt(){
+ if(tiltEnabled){tiltEnabled=false;tiltValue=0;ui.tilt.textContent='このスマホの傾きで操作';ui.tilt.setAttribute('aria-pressed','false');return;}
+ if(typeof DeviceOrientationEvent==='undefined'){ui.tilt.textContent='この端末は傾きセンサー非対応';return;}
+ try{
+  if(typeof DeviceOrientationEvent.requestPermission==='function'&&await DeviceOrientationEvent.requestPermission()!=='granted')throw new Error('permission');
+  if(!tiltListening){window.addEventListener('deviceorientation',e=>{if(tiltEnabled&&e.gamma!=null)tiltValue=clamp(e.gamma/24,-1,1);});tiltListening=true;}
+  tiltEnabled=true;ui.tilt.textContent='傾き操作をオフにする';ui.tilt.setAttribute('aria-pressed','true');
+ }catch{ui.tilt.textContent='傾き操作を開始できませんでした';}
+}
+document.addEventListener('keydown',e=>{
+ if(e.target.closest?.('input,textarea,select,[contenteditable="true"],button'))return;
+ if(['ArrowLeft','KeyA','ArrowRight','KeyD'].includes(e.code)){keyboard.add(e.code);e.preventDefault();}
+ if(['Space','KeyP','Escape'].includes(e.code)){if(!e.repeat)togglePause();e.preventDefault();}
+ if(e.code==='Enter'&&!e.repeat&&(['ready','finished'].includes(run.state)||(run.state==='dnf'&&dnfShown)))begin();
+});
+document.addEventListener('keyup',e=>keyboard.delete(e.code));
+window.addEventListener('blur',()=>{clearInput();if(run.state==='running')togglePause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(run.state==='running')togglePause();}});
+canvas.addEventListener('scene-error',e=>{if(run.state==='running')togglePause();ui.overlay.hidden=false;ui.title.textContent='表示が停止しました';ui.copy.textContent=e.detail;ui.start.disabled=true;});
+ui.start.addEventListener('click',begin);ui.pause.addEventListener('click',togglePause);ui.save.addEventListener('click',saveScore);ui.tilt.addEventListener('click',enableTilt);
+bindHold(root.querySelector('[data-control="left"]'),'left');bindHold(root.querySelector('[data-control="right"]'),'right');
+byId('show-ranking').addEventListener('click',()=>{const panel=byId('ranking-panel');panel.hidden=!panel.hidden;if(!panel.hidden&&run.state==='running')togglePause();});byId('close-ranking').addEventListener('click',()=>{byId('ranking-panel').hidden=true;root.focus();});
+byId('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(root.requestFullscreen)await root.requestFullscreen();else throw new Error('unsupported');}catch{byId('fullscreen').textContent='全画面非対応';}});
+function loop(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;
+ const steer=clamp(Number(keyboard.has('ArrowRight')||keyboard.has('KeyD')||touch.has('right'))-Number(keyboard.has('ArrowLeft')||keyboard.has('KeyA')||touch.has('left'))+(tiltEnabled?tiltValue:0),-1,1);
+ while(acc>=FIXED){const before=run.state;run.step(FIXED,{steer,sensitivity:activeSensitivity,speedMultiplier:activeSpeedMultiplier});acc-=FIXED;if(before==='running'){if(run.state==='finished')finish();else if(run.state==='dnf'){
+  audio.stop();clearInput();ui.pause.disabled=true;root.classList.add('crashing');
+ }}}
+ for(const effect of run.audioEvents.splice(0))sound(effect);
+ if(run.state==='dnf'&&!dnfShown&&run.crashTime>=1.2)showDnf();
+ updateUi(now);renderer.render(run);requestAnimationFrame(loop);
+}
+renderRanking();requestAnimationFrame(loop);
+})();
+
+</script>
+</body></html>
