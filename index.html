@@ -18,7 +18,7 @@
 .save{display:flex;gap:8px;margin:20px 0}.save input{width:200px;max-width:55%;min-width:0;border:1px solid #aecad366;background:#16323bca;color:#fff;border-radius:4px;padding:13px;font-size:14px}.save button{border:1px solid #ffffff55;border-radius:4px;background:#d2e8ed;color:#19313b;padding:10px 16px;font-size:12px}
 .bottom{position:absolute;bottom:25px;left:38px;right:38px;display:flex;justify-content:space-between;align-items:flex-end;gap:25px;z-index:1;pointer-events:none}.location{font-size:10px;letter-spacing:.16em;line-height:1.8;text-shadow:0 2px 10px #153540}.location span{display:block;font-size:9px;color:#d0e1e6;letter-spacing:.1em}.distance{font-size:10px;text-align:right;letter-spacing:.1em;width:140px}.progress-track{height:2px;background:#ffffff38;margin-top:9px}#progress{height:2px;width:0;background:#f5b58d}
 .feet{position:absolute;inset:auto 0 75px;display:flex;justify-content:center;gap:12px;z-index:1;opacity:0;pointer-events:none;transition:opacity .3s}.playing .feet{opacity:1}.foot{pointer-events:auto;touch-action:none;user-select:none;border:1px solid #ffffff50;background:#10293450;color:#fff;backdrop-filter:blur(8px);width:100px;height:44px;border-radius:30px;font-size:13px}.foot.pressed{background:#d39a70a8}.foot small{font-size:9px;opacity:.7;margin:0 8px}
-.ranking-panel{position:absolute;right:25px;top:90px;width:min(320px,calc(100% - 50px));z-index:6;background:#122a34ef;backdrop-filter:blur(20px);border:1px solid #ffffff30;padding:26px;border-radius:12px;box-shadow:0 18px 70px #06202b55}.ranking-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.ranking-head h2{font-size:12px;letter-spacing:.12em;font-weight:500;margin:0}.ranking-head button{background:none;border:0;color:#fff;font-size:25px;width:35px;height:35px}.ranking{padding:0;list-style:none;margin:18px 0}.ranking li{display:flex;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid #ffffff1a;font-size:13px}.ranking span{overflow-wrap:anywhere}.ranking strong{font-weight:400;color:#f5c49f;white-space:nowrap;font-variant-numeric:tabular-nums}.aside-copy{font-size:10px;line-height:1.8;color:#a9c2ce}.tilt{width:100%;margin-top:8px;border:1px solid #ffffff33;border-radius:4px;background:#24444f;color:#e0edf1;padding:12px;font-size:11px}
+.ranking-panel{position:absolute;right:25px;top:90px;width:min(320px,calc(100% - 50px));z-index:6;background:#122a34ef;backdrop-filter:blur(20px);border:1px solid #ffffff30;padding:26px;border-radius:12px;box-shadow:0 18px 70px #06202b55}.ranking-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.ranking-head h2{font-size:12px;letter-spacing:.12em;font-weight:500;margin:0}.ranking-head button{background:none;border:0;color:#fff;font-size:25px;width:35px;height:35px}.ranking{padding:0;list-style:none;margin:18px 0}.ranking li{display:flex;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid #ffffff1a;font-size:13px}.ranking span{overflow-wrap:anywhere}.ranking strong{font-weight:400;color:#f5c49f;white-space:nowrap;font-variant-numeric:tabular-nums}.aside-copy{font-size:10px;line-height:1.8;color:#a9c2ce}.tilt{width:100%;margin-top:8px;border:1px solid #ffffff33;border-radius:4px;background:#24444f;color:#e0edf1;padding:12px;font-size:11px}.tilt-primary{display:inline-flex;width:auto;margin:0 0 0 10px;min-height:54px;align-items:center;vertical-align:middle;padding:15px 18px;border-color:#ffffff55;background:#16303bcc;border-radius:3px;letter-spacing:.08em}
 @media(max-width:650px){.game{min-height:580px}.topbar{padding:22px 20px}.wordmark{font-size:12px}.wordmark small{font-size:8px}.glass{padding:10px 12px;font-size:10px}#fullscreen{display:none}.hud{top:102px;left:20px;gap:22px}.stat strong{font-size:23px}.next-gate{top:168px;left:20px;right:auto;font-size:9px}.overlay{padding:0 25px 24vh}.modal h1{font-size:58px}.modal p{font-size:12px}.bottom{left:20px;right:20px;bottom:20px}.distance{width:96px}.feet{bottom:80px;gap:14px}.foot{width:125px;height:58px}.controls-note{font-size:9px}.commentary{top:34%;font-size:12px}.finished .overlay{padding-bottom:20vh}.save input{font-size:16px}}
 @media(max-height:640px) and (min-width:651px){.game{min-height:460px}.overlay{padding-bottom:100px}.modal h1{font-size:62px}.modal p{line-height:1.6;margin-bottom:15px}.kicker{margin-bottom:12px}.feet{bottom:68px}.hud{top:89px}.next-gate{top:101px}}
 .drive-state{font-size:10px;letter-spacing:.08em;margin-top:8px;min-height:12px;color:#e5f6ee}.drive-state[data-mode=turn]{color:#ffd1a3}
@@ -44,9 +44,9 @@
  <div id="next-gate" class="next-gate"></div><div id="commentary" class="commentary" role="status"></div>
  <div class="feet" aria-label="左右にターン"><button class="foot" data-control="left" type="button" aria-label="左にターン">← <small>LEFT</small></button><button class="foot" data-control="right" type="button" aria-label="右にターン"><small>RIGHT</small> →</button></div>
  <div id="overlay" class="overlay"><section class="modal"><div class="kicker">THE MOUNTAIN IS YOURS.</div><h1 id="overlay-title">SNOW LINE.</h1><p id="overlay-copy">白銀の、その先へ。
-24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><div class="controls-note">← → / A・D：ターン　·　離すと直滑降　·　Space：一時停止<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
+24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを傾ける：ターン　·　離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
  <div class="bottom"><div class="location">ALPINE RIDGE<span>1,440 METRES · 24 GATES · GS</span></div><div class="distance"><span id="remaining">1440 m</span><div class="progress-track"><div id="progress"></div></div></div></div>
- <aside id="ranking-panel" class="ranking-panel" hidden><div class="ranking-head"><h2>BEST RUNS</h2><button id="close-ranking" type="button" aria-label="記録を閉じる">×</button></div><ol id="ranking" class="ranking"></ol><p class="aside-copy">全24旗を通過した完走者のベスト5。<br>DNFは記録対象外です。</p><button id="tilt" class="tilt" type="button" aria-pressed="false">このスマホの傾きで操作</button></aside>
+ <aside id="ranking-panel" class="ranking-panel" hidden><div class="ranking-head"><h2>BEST RUNS</h2><button id="close-ranking" type="button" aria-label="記録を閉じる">×</button></div><ol id="ranking" class="ranking"></ol><p class="aside-copy">全24旗を通過した完走者のベスト5。<br>DNFは記録対象外です。</p></aside>
 </main>
 <script>
 /* Deterministic game rules. This file has no browser dependencies. */
@@ -788,7 +788,7 @@ const root=document.getElementById('festival-ski'),canvas=document.getElementByI
 const byId=id=>document.getElementById(id);
 const ui={time:byId('time'),speed:byId('speed'),gates:byId('gates'),score:byId('score'),call:byId('commentary'),overlay:byId('overlay'),title:byId('overlay-title'),copy:byId('overlay-copy'),start:byId('start'),pause:byId('pause'),saveBox:byId('save-score'),name:byId('player-name'),save:byId('save'),ranking:byId('ranking'),tilt:byId('tilt'),progress:byId('progress'),distance:byId('remaining')};
 const keyboard=new Set(),touch=new Set();
-let tiltValue=0,tiltEnabled=false,tiltListening=false,saved=false,last=performance.now(),acc=0,eventObject=null,eventUntil=0,renderer,activeSensitivity=1,activeSpeedMultiplier=1;
+let tiltValue=0,tiltRaw=0,tiltZero=0,tiltEnabled=false,tiltListening=false,saved=false,last=performance.now(),acc=0,eventObject=null,eventUntil=0,renderer,activeSensitivity=1,activeSpeedMultiplier=1;
 let dnfShown=false;
 const audio=new AlpineAudio();
 const STORAGE='festival-ski-ranking-sensitivity-v15',FIXED=1/120;
@@ -872,12 +872,20 @@ function bindHold(button,key){
  const release=()=>{touch.delete(key);button.classList.remove('pressed');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
 }
 async function enableTilt(){
- if(tiltEnabled){tiltEnabled=false;tiltValue=0;ui.tilt.textContent='このスマホの傾きで操作';ui.tilt.setAttribute('aria-pressed','false');return;}
+ if(tiltEnabled){tiltEnabled=false;tiltValue=0;ui.tilt.textContent='スマホを傾けて操作';ui.tilt.setAttribute('aria-pressed','false');return;}
  if(typeof DeviceOrientationEvent==='undefined'){ui.tilt.textContent='この端末は傾きセンサー非対応';return;}
  try{
   if(typeof DeviceOrientationEvent.requestPermission==='function'&&await DeviceOrientationEvent.requestPermission()!=='granted')throw new Error('permission');
-  if(!tiltListening){window.addEventListener('deviceorientation',e=>{if(tiltEnabled&&e.gamma!=null)tiltValue=clamp(e.gamma/24,-1,1);});tiltListening=true;}
-  tiltEnabled=true;ui.tilt.textContent='傾き操作をオフにする';ui.tilt.setAttribute('aria-pressed','true');
+  if(!tiltListening){window.addEventListener('deviceorientation',e=>{
+    const rawAngle=Number(screen.orientation?.angle??window.orientation??0);
+    const angle=((rawAngle%360)+360)%360;
+    const landscape=angle===90||angle===270;
+    const axis=landscape?Number(e.beta):Number(e.gamma);
+    if(!Number.isFinite(axis))return;
+    tiltRaw=landscape&&angle===270?-axis:axis;
+    if(tiltEnabled)tiltValue=clamp((tiltRaw-tiltZero)/22,-1,1);
+  });tiltListening=true;}
+  tiltZero=tiltRaw;tiltValue=0;tiltEnabled=true;ui.tilt.textContent='傾き操作をオフにする';ui.tilt.setAttribute('aria-pressed','true');
  }catch{ui.tilt.textContent='傾き操作を開始できませんでした';}
 }
 document.addEventListener('keydown',e=>{
