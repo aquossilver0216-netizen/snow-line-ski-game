@@ -70,7 +70,7 @@
   const GATE_WIDTH=.52;
   const FLAG_WIDTH=.20,SKIER_CLEARANCE=.035;
   const SKI_OUTER_EDGE=.335,POLE_REACH=.90;
-  const RUT={depth:1.92,lip:.24,halfNarrow:5.625,halfWide:11.25,edgeFeather:2.4};
+  const RUT={depth:1.92,lip:.24,halfNarrow:5.625,halfWide:11.25,innerExtra:1.8,edgeFeather:2.4};
   const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
   const COURSE_LIMIT=3.88;
   const gates=Array.from({length:24},(_,i)=>{
@@ -98,8 +98,10 @@
     return [target(gate)+(target(next)-target(gate))*shape,gate.side+(next.side-gate.side)*shape,.42+.58*Math.pow(pulse,1.4),RUT.halfNarrow+(RUT.halfWide-RUT.halfNarrow)*pulse];
   }
   function fluffySnowAt(x,distance){
-    const [lane,,strength,halfWidth]=rutProfile(distance),q=Math.abs(x-lane);
-    const groove=1-smooth(halfWidth-RUT.edgeFeather,halfWidth+RUT.edgeFeather,q);
+    const [lane,sideBlend,strength,halfWidth]=rutProfile(distance),offset=x-lane,q=Math.abs(offset);
+    const innerHalf=halfWidth+RUT.innerExtra*Math.abs(sideBlend),signedOffset=sideBlend*offset;
+    const edge=signedOffset<0?innerHalf:halfWidth;
+    const groove=1-smooth(edge-RUT.edgeFeather,edge+RUT.edgeFeather,q);
     return 1-groove;
   }
   // Keep a clear corridor connecting the outside of successive flags.
@@ -260,7 +262,8 @@ function snowWearHeight(x,distance){
   if(Math.abs(x)>44)return 0;
   const [lane,sideBlend,strength,halfWidth]=rutProfile(distance),dx=x-lane,q=Math.abs(dx);
   // One continuous S-shaped packed line, with a soft inner edge and a low outer berm.
-  const across=1-smooth(halfWidth-RUT.edgeFeather,halfWidth+RUT.edgeFeather,q);
+  const innerHalf=halfWidth+RUT.innerExtra*Math.abs(sideBlend),edge=sideBlend*dx<0?innerHalf:halfWidth;
+  const across=1-smooth(edge-RUT.edgeFeather,edge+RUT.edgeFeather,q);
   const rightWeight=(sideBlend+1)*.5,leftWeight=1-rightWeight;
   const lip=rightWeight*Math.exp(-Math.pow((dx-(halfWidth+.65))/1.1,2))+leftWeight*Math.exp(-Math.pow((dx+(halfWidth+.65))/1.1,2));
   return strength*(-RUT.depth*across+RUT.lip*lip);
@@ -413,7 +416,9 @@ void main(){
    float track=(1.-smoothstep(.018,.018+trackAA,trackDistance))*piste;
    base*=1.-track*.095*smoothstep(0.,30.,-vPosition.z)*(1.-smoothstep(${(FINISH-70).toFixed(1)},${(FINISH-30).toFixed(1)},-vPosition.z));
    float rutAcross=pisteX-rut.x;
-   float hollow=(1.-smoothstep(rut.w-${RUT.edgeFeather.toFixed(1)},rut.w+${RUT.edgeFeather.toFixed(1)},abs(rutAcross)))*rut.z;
+   float innerHalf=rut.w+${RUT.innerExtra.toFixed(1)}*abs(rut.y);
+   float grooveEdge=rut.y*rutAcross<0.?innerHalf:rut.w;
+   float hollow=(1.-smoothstep(grooveEdge-${RUT.edgeFeather.toFixed(1)},grooveEdge+${RUT.edgeFeather.toFixed(1)},abs(rutAcross)))*rut.z;
    float rightWeight=(rut.y+1.)*.5,leftWeight=1.-rightWeight;
    float snowLip=(rightWeight*exp(-pow((rutAcross-(rut.w+.65))/1.1,2.))+leftWeight*exp(-pow((rutAcross+(rut.w+.65))/1.1,2.)))*rut.z;
    base=mix(base,vec3(.57,.70,.81),hollow*.34);
