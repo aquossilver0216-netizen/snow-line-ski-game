@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#18282e"><title>SNOW LINE — Alpine descent</title>
 <style>
 :root{font-family:"Helvetica Neue","Hiragino Sans","Yu Gothic",sans-serif;color:#fff;background:#18282e;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #ffbd92;outline-offset:4px}[hidden]{display:none!important}
+*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}button:disabled{opacity:.6;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #ffbd92;outline-offset:4px}[hidden]{display:none!important}
 .game{position:relative;width:100%;height:100svh;min-height:580px;overflow:hidden;background:#9ec1d4;isolation:isolate}.game:fullscreen{height:100vh}.game:focus{outline:none}canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0a1e314d,transparent 23%,transparent 66%,#0b1e2860)}
 .topbar{position:absolute;top:0;left:0;right:0;padding:29px 38px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:3}.wordmark{font-size:15px;font-weight:600;letter-spacing:.25em;text-shadow:0 2px 18px #18333f}.wordmark small{display:block;font-size:9px;font-weight:400;letter-spacing:.23em;margin-top:8px;opacity:.7}.actions{display:flex;gap:9px}.glass{border:1px solid #ffffff55;border-radius:50px;background:#16303b55;backdrop-filter:blur(12px);color:#fff;padding:10px 17px;font-size:11px;letter-spacing:.08em}
@@ -913,6 +913,7 @@ window.addEventListener('blur',()=>{clearInput();if(run.state==='running')toggle
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(run.state==='running')togglePause();}});
 canvas.addEventListener('scene-error',e=>{if(run.state==='running')togglePause();ui.overlay.hidden=false;ui.title.textContent='表示が停止しました';ui.copy.textContent=e.detail;ui.start.disabled=true;});
 ui.start.addEventListener('click',begin);ui.pause.addEventListener('click',togglePause);ui.save.addEventListener('click',saveScore);ui.tilt.addEventListener('click',enableTilt);
+root.addEventListener('contextmenu',e=>{if(e.target.closest('button'))e.preventDefault();});
 bindHold(root.querySelector('[data-control="left"]'),'left');bindHold(root.querySelector('[data-control="right"]'),'right');
 byId('show-ranking').addEventListener('click',()=>{const panel=byId('ranking-panel');panel.hidden=!panel.hidden;if(!panel.hidden&&run.state==='running')togglePause();});byId('close-ranking').addEventListener('click',()=>{byId('ranking-panel').hidden=true;root.focus();});
 byId('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(root.requestFullscreen)await root.requestFullscreen();else throw new Error('unsupported');}catch{byId('fullscreen').textContent='全画面非対応';}});
