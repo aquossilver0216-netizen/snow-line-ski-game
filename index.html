@@ -44,7 +44,7 @@
  <div id="next-gate" class="next-gate"></div><div id="commentary" class="commentary" role="status"></div>
  <div class="feet" aria-label="左右にターン"><button class="foot" data-control="left" type="button" aria-label="左にターン">← <small>LEFT</small></button><button class="foot" data-control="right" type="button" aria-label="右にターン"><small>RIGHT</small> →</button></div>
  <div id="overlay" class="overlay"><section class="modal"><div class="kicker">THE MOUNTAIN IS YOURS.</div><h1 id="overlay-title">SNOW LINE.</h1><p id="overlay-copy">白銀の、その先へ。
-24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを左右に傾ける：ターン<br>スマホを前に傾ける：加速　·　後ろに傾ける：減速　·　離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
+24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを左右に傾ける：ターン<br>離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
  <div class="bottom"><div class="distance"><span id="remaining">1440 m</span><div class="progress-track"><div id="progress"></div></div></div></div>
  <aside id="ranking-panel" class="ranking-panel" hidden><div class="ranking-head"><h2>BEST RUNS</h2><button id="close-ranking" type="button" aria-label="記録を閉じる">×</button></div><ol id="ranking" class="ranking"></ol><p class="aside-copy">全24旗を通過した完走者のベスト5。<br>DNFは記録対象外です。</p></aside>
 </main>
@@ -163,12 +163,12 @@
       if(this.state==='dnf'){this.crashTime=Math.min(1.5,this.crashTime+clamp(dt,0,1/30));return;}
       if(this.state!=='running')return;
       dt=clamp(dt,0,1/30);this.elapsed+=dt;this.hitCooldown=Math.max(0,this.hitCooldown-dt);
-      const sensitivity=clamp(Number(input.sensitivity)||1,.5,2);
-      const speedMultiplier=clamp(Number(input.speedMultiplier)||1,1,2);this.speedMultiplier=speedMultiplier;
+      const sensitivity=clamp(Number(input.sensitivity)||1,.5,5);
+      const speedMultiplier=clamp(Number(input.speedMultiplier)||1,.5,2);this.speedMultiplier=speedMultiplier;
       const [, , ,rutHalfWidth]=rutProfile(this.distance);
       const widthPulse=clamp((rutHalfWidth-RUT.halfNarrow)/(RUT.halfWide-RUT.halfNarrow),0,1);
       this.turnSensitivity=1-.5*widthPulse;
-      const steer=clamp(Number(input.steer)||0,-1,1),pitch=clamp(Number(input.pitch)||0,-1,1),controlSteer=steer*.75*sensitivity*this.turnSensitivity;
+      const steer=clamp(Number(input.steer)||0,-1,1),controlSteer=steer*.75*sensitivity*this.turnSensitivity;
       this.skiSteer+=(controlSteer-this.skiSteer)*(1-Math.exp(-dt*12));
       const previousX=this.x;
       const baseSpeed=this.speed/SPEED_SCALE;
@@ -187,13 +187,10 @@
       const gravity=9.81*grade/surfaceScale;
       const resistance=.16+.003*baseSpeed*baseSpeed;
       const edging=this.turnLoad*(2.5+.62*baseSpeed)/3*this.turnBrakeMultiplier*2;
-      // Leaning forward/backward changes speed at the same strength as a
-      // normal (1x) turn brake. Positive pitch means leaning forward.
-      const pitchForce=pitch*(2.5+.62*baseSpeed)/3*2;
       const previousSpeed=this.speed;
       this.snowLoad=(fluffySnowAt(this.x*TRACK_UNIT-.24,this.distance)+fluffySnowAt(this.x*TRACK_UNIT+.24,this.distance))*.5;
       const snowDrag=this.snowLoad*(.8+baseSpeed*.09);
-      this.speed=clamp(this.speed+(gravity-resistance-edging-snowDrag+pitchForce)*dt*SPEED_SCALE*SPEED_SCALE,MIN_SPEED,MAX_SPEED);
+      this.speed=clamp(this.speed+(gravity-resistance-edging-snowDrag)*dt*SPEED_SCALE*SPEED_SCALE,MIN_SPEED,MAX_SPEED);
       this.acceleration=(this.speed-previousSpeed)/(dt||1);
       const before=this.distance;
       this.distance=Math.min(FINISH,this.distance+this.speed*speedMultiplier/surfaceScale*dt);
@@ -796,7 +793,7 @@ const root=document.getElementById('festival-ski'),canvas=document.getElementByI
 const byId=id=>document.getElementById(id);
 const ui={time:byId('time'),speed:byId('speed'),gates:byId('gates'),score:byId('score'),call:byId('commentary'),overlay:byId('overlay'),title:byId('overlay-title'),copy:byId('overlay-copy'),start:byId('start'),pause:byId('pause'),saveBox:byId('save-score'),name:byId('player-name'),save:byId('save'),ranking:byId('ranking'),tilt:byId('tilt'),progress:byId('progress'),distance:byId('remaining')};
 const keyboard=new Set(),touch=new Set();
-let tiltValue=0,tiltRaw=0,tiltZero=0,pitchValue=0,pitchRaw=0,pitchZero=0,tiltEnabled=false,tiltListening=false,saved=false,last=performance.now(),acc=0,eventObject=null,eventUntil=0,renderer,activeSensitivity=1,activeSpeedMultiplier=1;
+let tiltValue=0,tiltRaw=0,tiltZero=0,tiltEnabled=false,tiltListening=false,saved=false,last=performance.now(),acc=0,eventObject=null,eventUntil=0,renderer,activeSensitivity=1,activeSpeedMultiplier=1;
 let dnfShown=false;
 const audio=new AlpineAudio();
 const STORAGE='festival-ski-ranking-sensitivity-v15',FIXED=1/120;
@@ -830,7 +827,7 @@ musicButton.addEventListener('click',()=>{
  try{localStorage.setItem('festival-ski-music',audio.enabled?'on':'off');}catch{}
  if(audio.enabled&&run.state==='running')audio.start();else audio.stop();
 });
-function clearInput(){keyboard.clear();touch.clear();tiltValue=0;pitchValue=0;root.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));}
+function clearInput(){keyboard.clear();touch.clear();tiltValue=0;root.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));}
 function updateUi(now){
  ui.time.textContent=run.totalTime.toFixed(1);ui.speed.textContent=Math.round(run.speed*run.speedMultiplier*3.6);ui.gates.textContent=`${run.gatesPassed} / ${gates.length}`;ui.score.textContent=String(run.score);ui.progress.style.width=`${run.progress*100}%`;ui.distance.textContent=`${Math.ceil(run.remaining)} m`;
  byId('slope').textContent=Math.round(slopeDegrees(run.distance));
@@ -880,7 +877,7 @@ function bindHold(button,key){
  const release=()=>{touch.delete(key);button.classList.remove('pressed');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
 }
 async function enableTilt(){
- if(tiltEnabled){tiltEnabled=false;tiltValue=0;pitchValue=0;ui.tilt.textContent='スマホを傾けて操作';ui.tilt.setAttribute('aria-pressed','false');return;}
+ if(tiltEnabled){tiltEnabled=false;tiltValue=0;ui.tilt.textContent='スマホを傾けて操作';ui.tilt.setAttribute('aria-pressed','false');return;}
  if(typeof DeviceOrientationEvent==='undefined'){ui.tilt.textContent='この端末は傾きセンサー非対応';return;}
  try{
   if(typeof DeviceOrientationEvent.requestPermission==='function'&&await DeviceOrientationEvent.requestPermission()!=='granted')throw new Error('permission');
@@ -889,17 +886,14 @@ async function enableTilt(){
     const angle=((rawAngle%360)+360)%360;
     const landscape=angle===90||angle===270;
     const sideAxis=landscape?Number(e.beta):Number(e.gamma);
-    const pitchAxis=landscape?Number(e.gamma):Number(e.beta);
-    if(!Number.isFinite(sideAxis)||!Number.isFinite(pitchAxis))return;
+    if(!Number.isFinite(sideAxis))return;
     const reverse=landscape&&angle===270;
     tiltRaw=reverse?-sideAxis:sideAxis;
-    pitchRaw=reverse?-pitchAxis:pitchAxis;
     if(tiltEnabled){
       tiltValue=clamp((tiltRaw-tiltZero)/22,-1,1);
-      pitchValue=clamp((pitchZero-pitchRaw)/22,-1,1);
     }
   });tiltListening=true;}
-  tiltZero=tiltRaw;pitchZero=pitchRaw;tiltValue=0;pitchValue=0;tiltEnabled=true;ui.tilt.textContent='傾き操作をオフにする';ui.tilt.setAttribute('aria-pressed','true');
+  tiltZero=tiltRaw;tiltValue=0;tiltEnabled=true;ui.tilt.textContent='傾き操作をオフにする';ui.tilt.setAttribute('aria-pressed','true');
  }catch{ui.tilt.textContent='傾き操作を開始できませんでした';}
 }
 document.addEventListener('keydown',e=>{
@@ -920,8 +914,7 @@ byId('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreen
 function loop(now){
  const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;
  const steer=clamp(Number(keyboard.has('ArrowRight')||keyboard.has('KeyD')||touch.has('right'))-Number(keyboard.has('ArrowLeft')||keyboard.has('KeyA')||touch.has('left'))+(tiltEnabled?tiltValue:0),-1,1);
- const pitch=tiltEnabled?pitchValue:0;
- while(acc>=FIXED){const before=run.state;run.step(FIXED,{steer,pitch,sensitivity:activeSensitivity,speedMultiplier:activeSpeedMultiplier});acc-=FIXED;if(before==='running'){if(run.state==='finished')finish();else if(run.state==='dnf'){
+ while(acc>=FIXED){const before=run.state;run.step(FIXED,{steer,sensitivity:activeSensitivity,speedMultiplier:activeSpeedMultiplier});acc-=FIXED;if(before==='running'){if(run.state==='finished')finish();else if(run.state==='dnf'){
   audio.stop();clearInput();ui.pause.disabled=true;root.classList.add('crashing');
  }}}
  for(const effect of run.audioEvents.splice(0))sound(effect);
