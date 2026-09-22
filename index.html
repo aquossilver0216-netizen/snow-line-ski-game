@@ -187,6 +187,7 @@
       this.skiSteer+=(controlSteer-this.skiSteer)*(1-Math.exp(-dt*12));
       const previousX=this.x;
       const baseSpeed=this.speed/SPEED_SCALE;
+      const previousTurnLoad=this.turnLoad;
       this.turnLoad+=(Math.abs(controlSteer)-this.turnLoad)*(1-Math.exp(-dt*10*SPEED_SCALE));
       const targetV=controlSteer*(.75+clamp(baseSpeed/20,0,1)*1.10)*SPEED_SCALE;
       this.velocityX+=(targetV-this.velocityX)*(1-Math.exp(-dt*9*SPEED_SCALE));
@@ -211,11 +212,15 @@
       const surfaceScale=Math.sqrt(1+grade*grade+curveSlope(this.distance)**2);
       const gravity=9.81*grade/surfaceScale;
       const resistance=.16+.003*baseSpeed*baseSpeed;
-      const edging=this.turnLoad*(2.5+.62*baseSpeed)/3*this.turnBrakeMultiplier*2;
       const previousSpeed=this.speed;
       this.snowLoad=(fluffySnowAt(this.x*TRACK_UNIT-.24,this.distance)+fluffySnowAt(this.x*TRACK_UNIT+.24,this.distance))*.5;
       const snowDrag=this.snowLoad*(.8+baseSpeed*.09);
-      this.speed=clamp(this.speed+(gravity-resistance-edging-snowDrag)*dt*SPEED_SCALE*SPEED_SCALE,MIN_SPEED,MAX_SPEED);
+      const lateralSlip=clamp(Math.abs(this.velocityX-targetV)/(SPEED_SCALE*1.6),0,1);
+      const carveQuality=clamp(this.turnLoad/.75,0,1)*(1-this.snowLoad)*(1-.5*lateralSlip);
+      const edging=this.turnLoad*(2.5+.62*baseSpeed)/3*this.turnBrakeMultiplier*2*(1-.28*carveQuality);
+      const releaseRate=clamp((previousTurnLoad-this.turnLoad)/(dt||1),0,20);
+      const skiRebound=releaseRate*.035*carveQuality;
+      this.speed=clamp(this.speed+(gravity-resistance-edging-snowDrag+skiRebound)*dt*SPEED_SCALE*SPEED_SCALE,MIN_SPEED,MAX_SPEED);
       this.acceleration=(this.speed-previousSpeed)/(dt||1);
       const before=this.distance;
       this.distance=Math.min(FINISH,this.distance+this.speed*speedMultiplier/surfaceScale*dt);
@@ -857,7 +862,7 @@ function updateUi(now){
  ui.time.textContent=run.totalTime.toFixed(1);ui.speed.textContent=Math.round(run.speed*run.speedMultiplier*3.6);ui.gates.textContent=`${run.gatesPassed} / ${gates.length}`;ui.score.textContent=String(run.score);ui.progress.style.width=`${run.progress*100}%`;ui.distance.textContent=`${Math.ceil(run.remaining)} m`;
  byId('slope').textContent=Math.round(slopeDegrees(run.distance));
  const drive=byId('drive-state'),turning=run.turnLoad>.18;
- drive.textContent=run.state!=='running'?'':run.snowLoad>.15?'深雪で減速':turning?(run.acceleration<-.15?(run.turnBrakeMultiplier>=2?'強いターン減速':'ターン減速'):'カービング'):run.acceleration>.15?'加速中':run.acceleration<-.15?'自然減速':'巡航';drive.dataset.mode=run.snowLoad>.15?'rut':turning?'turn':'straight';
+ drive.textContent=run.state!=='running'?'':run.snowLoad>.15?'深雪で減速':turning?(run.acceleration>.15?'カービング加速':run.acceleration<-.15?(run.turnBrakeMultiplier>=2?'強いターン減速':'ターン減速'):'カービング'):run.acceleration>.15?'加速中':run.acceleration<-.15?'自然減速':'巡航';drive.dataset.mode=run.snowLoad>.15?'rut':turning?'turn':'straight';
  if(run.event!==eventObject){eventObject=run.event;eventUntil=now+1800;ui.call.textContent=run.event.text;ui.call.dataset.kind=run.event.type;if(['gate','dnf','finish'].includes(run.event.type))sound(run.event.type);}
  ui.call.classList.toggle('visible',now<eventUntil&&run.state==='running'||run.state==='paused');
  const next=gates.find(g=>!run.processedGates.has(g.id));byId('next-gate').textContent=run.state==='paused'?'PAUSED':next?`${next.side>0?'赤の右側 →':'← 青の左側'}  /  ${Math.max(0,Math.ceil(next.distance-run.distance))} m`:'FINISH AHEAD';byId('next-gate').dataset.side=next?.color||'';
