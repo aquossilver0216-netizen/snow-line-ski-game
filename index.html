@@ -44,7 +44,7 @@
  <div id="next-gate" class="next-gate"></div><div id="commentary" class="commentary" role="status"></div>
  <div class="feet" aria-label="左右にターン"><button class="foot" data-control="left" type="button" aria-label="左にターン">← <small>LEFT</small></button><button class="foot" data-control="right" type="button" aria-label="右にターン"><small>RIGHT</small> →</button></div>
  <div id="overlay" class="overlay"><section class="modal"><div class="kicker">THE MOUNTAIN IS YOURS.</div><h1 id="overlay-title">SNOW LINE.</h1><p id="overlay-copy">白銀の、その先へ。
-24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを縦向き・横向きどちらでも左右に傾けてターン<br>離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
+24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを縦向き・横向きどちらでも左右に傾けてターン<br>旗間の中央で切り返すと、旗の少し手前で荷重が最大。旗の横では外へ流れます。<br>離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
  <div class="bottom"><div class="distance"><span id="remaining">1440 m</span><div class="progress-track"><div id="progress"></div></div></div></div>
  <aside id="ranking-panel" class="ranking-panel" hidden><div class="ranking-head"><h2>BEST RUNS</h2><button id="close-ranking" type="button" aria-label="記録を閉じる">×</button></div><ol id="ranking" class="ranking"></ol><p class="aside-copy">全24旗を通過した完走者のベスト5。<br>DNFは記録対象外です。</p></aside>
 </main>
@@ -140,7 +140,7 @@
     reset(){
       this.state='ready';this.x=0;this.velocityX=0;this.distance=0;
       this.speed=0;this.speedMultiplier=1;this.elapsed=0;this.penalty=0;this.score=0;
-      this.turnLoad=0;this.skiSteer=0;this.turnSensitivity=1;this.heldTurnTime=0;this.turnBrakeMultiplier=1;this.acceleration=0;
+      this.turnLoad=0;this.skiSteer=0;this.turnSensitivity=1;this.turnPower=1;this.centrifugalForce=0;this.heldTurnTime=0;this.turnBrakeMultiplier=1;this.acceleration=0;
       this.combo=0;this.gatesPassed=0;this.gatesMissed=0;
       this.hitCooldown=0;this.processedGates=new Set();this.dnfReason='';
       this.snowLoad=1;this.poleHits=new Set();this.audioEvents=[];this.crashTime=0;this.crashSide=1;this.crashSpeed=0;
@@ -167,15 +167,35 @@
       const speedMultiplier=clamp(Number(input.speedMultiplier)||1,.5,2);this.speedMultiplier=speedMultiplier;
       const [, , ,rutHalfWidth]=rutProfile(this.distance);
       const widthPulse=clamp((rutHalfWidth-RUT.halfNarrow)/(RUT.halfWide-RUT.halfNarrow),0,1);
-      this.turnSensitivity=1-.5*widthPulse;
+      const nextGateIndex=gates.findIndex(g=>g.distance>=this.distance);
+      const nextGate=nextGateIndex>=0?gates[nextGateIndex]:null;
+      let gatePhase=.5;
+      if(nextGate){
+        const previousGateDistance=nextGateIndex>0?gates[nextGateIndex-1].distance:0;
+        gatePhase=clamp((this.distance-previousGateDistance)/(nextGate.distance-previousGateDistance),0,1);
+      }
+      // Release after a gate, stay neutral near the midpoint, then build edge
+      // pressure so it peaks just before the next gate (phase 0.86).
+      const previousRelease=1-smooth(.08,.46,gatePhase);
+      const pressureBuild=smooth(.50,.86,gatePhase);
+      const pressureRelease=1-.25*smooth(.86,1,gatePhase);
+      this.turnPower=(.72+.42*previousRelease+1.08*pressureBuild)*pressureRelease;
+      this.turnSensitivity=(1-.5*widthPulse)*this.turnPower;
       const steer=clamp(Number(input.steer)||0,-1,1),controlSteer=steer*.75*sensitivity*this.turnSensitivity;
       this.skiSteer+=(controlSteer-this.skiSteer)*(1-Math.exp(-dt*12));
       const previousX=this.x;
       const baseSpeed=this.speed/SPEED_SCALE;
+      this.turnLoad+=(Math.abs(controlSteer)-this.turnLoad)*(1-Math.exp(-dt*10*SPEED_SCALE));
       const targetV=controlSteer*(.75+clamp(baseSpeed/20,0,1)*1.10)*SPEED_SCALE;
       this.velocityX+=(targetV-this.velocityX)*(1-Math.exp(-dt*9*SPEED_SCALE));
+      // Near the gate, speed and edge pressure carry the skier toward the
+      // outside of the turn. This is strongest shortly before the flag and
+      // remains noticeable at the gate plane.
+      const centrifugalWindow=nextGate?smooth(.66,.86,gatePhase)*(1-.25*smooth(.92,1,gatePhase)):0;
+      const speedRatio=clamp(baseSpeed/(MAX_SPEED/SPEED_SCALE),0,1);
+      this.centrifugalForce=centrifugalWindow*clamp(this.turnLoad,0,1.4)*speedRatio*speedRatio*.42*SPEED_SCALE;
+      if(nextGate)this.velocityX+=nextGate.side*this.centrifugalForce*dt;
       this.x=clamp(this.x+this.velocityX*dt*speedMultiplier,-COURSE_LIMIT,COURSE_LIMIT);
-      this.turnLoad+=(Math.abs(controlSteer)-this.turnLoad)*(1-Math.exp(-dt*10*SPEED_SCALE));
       // Short turns stay light. Sustained steering progressively digs in;
       // releasing the control sheds the accumulated braking over about 0.6 s.
       const turnAmount=Math.abs(controlSteer);
