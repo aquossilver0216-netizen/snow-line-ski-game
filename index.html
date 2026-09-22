@@ -39,7 +39,7 @@
 <body>
 <main id="festival-ski" class="game" tabindex="0" aria-label="一人称3Dスキーゲーム">
  <canvas id="course" aria-label="雪山の斜面を自分の目線で滑る3Dコース"></canvas><div class="shade"></div>
- <header class="topbar"><div class="wordmark">SNOW LINE<small>GIANT SLALOM / 02</small></div><div class="actions"><label class="sensitivity glass">感度<select id="sensitivity" aria-label="ターン感度"><option value="0.5">0.5×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option><option value="2.5">2.5×</option><option value="3">3.0×</option><option value="3.5">3.5×</option><option value="4">4.0×</option><option value="4.5">4.5×</option><option value="5">5.0×</option></select></label><label class="sensitivity glass">速度<select id="speed-multiplier" aria-label="滑走速度"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option></select></label><button id="music" class="glass" type="button" aria-pressed="true">BGM：ON</button><button id="quality" class="glass" type="button" aria-label="高精細画質。押すと標準画質に切り替え" title="重い場合は標準画質へ">画質：高</button><button id="pause" class="glass" disabled type="button">一時停止</button><button id="show-ranking" class="glass" type="button">記録</button><button id="fullscreen" class="glass" type="button">全画面</button></div></header>
+ <header class="topbar"><div class="wordmark">SNOW LINE<small>GIANT SLALOM / 02</small></div><div class="actions"><label class="sensitivity glass">感度<select id="sensitivity" aria-label="ターン感度"><option value="0.5">0.5×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option><option value="2.5">2.5×</option><option value="3">3.0×</option><option value="3.5">3.5×</option><option value="4">4.0×</option><option value="4.5">4.5×</option><option value="5">5.0×</option><option value="10">10×</option><option value="15">15×</option></select></label><label class="sensitivity glass">速度<select id="speed-multiplier" aria-label="滑走速度"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option></select></label><button id="music" class="glass" type="button" aria-pressed="true">BGM：ON</button><button id="quality" class="glass" type="button" aria-label="高精細画質。押すと標準画質に切り替え" title="重い場合は標準画質へ">画質：高</button><button id="pause" class="glass" disabled type="button">一時停止</button><button id="show-ranking" class="glass" type="button">記録</button><button id="fullscreen" class="glass" type="button">全画面</button></div></header>
  <div class="hud"><div class="stat"><span>TIME</span><strong id="time">0.0</strong> <small>s</small></div><div class="stat"><span>SPEED</span><strong id="speed">0</strong> <small>km/h</small><div id="drive-state" class="drive-state"></div></div><div class="stat"><span>SLOPE</span><strong id="slope">11</strong> <small>°</small></div><div class="stat"><span>GATES</span><strong id="gates">0 / 24</strong></div><div class="stat score-stat"><span>SCORE</span><strong id="score">0</strong></div></div>
  <div id="next-gate" class="next-gate"></div><div id="commentary" class="commentary" role="status"></div>
  <div class="feet" aria-label="左右にターン"><button class="foot" data-control="left" type="button" aria-label="左にターン">← <small>LEFT</small></button><button class="foot" data-control="right" type="button" aria-label="右にターン"><small>RIGHT</small> →</button></div>
@@ -163,7 +163,7 @@
       if(this.state==='dnf'){this.crashTime=Math.min(1.5,this.crashTime+clamp(dt,0,1/30));return;}
       if(this.state!=='running')return;
       dt=clamp(dt,0,1/30);this.elapsed+=dt;this.hitCooldown=Math.max(0,this.hitCooldown-dt);
-      const sensitivity=clamp(Number(input.sensitivity)||1,.5,5);
+      const sensitivity=clamp(Number(input.sensitivity)||1,.5,15);
       const speedMultiplier=clamp(Number(input.speedMultiplier)||1,.5,2);this.speedMultiplier=speedMultiplier;
       const [, , ,rutHalfWidth]=rutProfile(this.distance);
       const widthPulse=clamp((rutHalfWidth-RUT.halfNarrow)/(RUT.halfWide-RUT.halfNarrow),0,1);
@@ -811,7 +811,7 @@ qualityButton.addEventListener('click',()=>{
  }catch{ui.call.textContent='画質を切り替えられませんでした。ページを再読み込みしてください。';ui.call.dataset.kind='error';}
  clearInput();root.focus({preventScroll:true});last=performance.now();acc=0;
 });
-const sensitivitySelect=byId('sensitivity'),allowedSensitivity=new Set(['0.5','1','1.5','2','2.5','3','3.5','4','4.5','5']);
+const sensitivitySelect=byId('sensitivity'),allowedSensitivity=new Set(['0.5','1','1.5','2','2.5','3','3.5','4','4.5','5','10','15']);
 try{const stored=localStorage.getItem('festival-ski-sensitivity');if(allowedSensitivity.has(stored))sensitivitySelect.value=stored;}catch{}
 sensitivitySelect.addEventListener('change',()=>{try{localStorage.setItem('festival-ski-sensitivity',sensitivitySelect.value);}catch{}});
 const speedSelect=byId('speed-multiplier'),allowedSpeed=new Set(['0.5','0.75','1','1.5','2']);
