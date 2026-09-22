@@ -44,7 +44,7 @@
  <div id="next-gate" class="next-gate"></div><div id="commentary" class="commentary" role="status"></div>
  <div class="feet" aria-label="左右にターン"><button class="foot" data-control="left" type="button" aria-label="左にターン">← <small>LEFT</small></button><button class="foot" data-control="right" type="button" aria-label="右にターン"><small>RIGHT</small> →</button></div>
  <div id="overlay" class="overlay"><section class="modal"><div class="kicker">THE MOUNTAIN IS YOURS.</div><h1 id="overlay-title">SNOW LINE.</h1><p id="overlay-copy">白銀の、その先へ。
-24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを縦向き・横向きどちらでも左右に傾けてターン<br>旗間の中央で切り返すと、旗の少し手前で荷重が最大。旗の横では外へ流れます。<br>離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
+24の旗を越えて、最後まで滑り切れ。</p><div id="save-score" class="save" hidden><input id="player-name" maxlength="12" autocomplete="off" placeholder="ニックネーム" aria-label="記録に載せるニックネーム"><button id="save" type="button">記録を残す</button></div><button id="start" class="primary" type="button">滑りはじめる</button><button id="tilt" class="tilt tilt-primary" type="button" aria-pressed="false">スマホを傾けて操作</button><div class="controls-note">← → / A・D：ターン　·　スマホを縦向き・横向きどちらでも左右に傾けてターン<br>旗を通過した直後に外足の荷重が最大になり、旗間の中盤で抜けて次の旗へ向けて高まります。<br>離すと直滑降<br>赤の右側 → ／ ← 青の左側。板2本ともポールの外側へ。<br>板が外側ならポールへの接触OK。不通過・ネット接触でDNF。<br>掘れたラインは速く、外のふかふか雪では減速。感度・BGMは右上。</div></section></div>
  <div class="bottom"><div class="distance"><span id="remaining">1440 m</span><div class="progress-track"><div id="progress"></div></div></div></div>
  <aside id="ranking-panel" class="ranking-panel" hidden><div class="ranking-head"><h2>BEST RUNS</h2><button id="close-ranking" type="button" aria-label="記録を閉じる">×</button></div><ol id="ranking" class="ranking"></ol><p class="aside-copy">全24旗を通過した完走者のベスト5。<br>DNFは記録対象外です。</p></aside>
 </main>
@@ -174,12 +174,14 @@
         const previousGateDistance=nextGateIndex>0?gates[nextGateIndex-1].distance:0;
         gatePhase=clamp((this.distance-previousGateDistance)/(nextGate.distance-previousGateDistance),0,1);
       }
-      // Release after a gate, stay neutral near the midpoint, then build edge
-      // pressure so it peaks just before the next gate (phase 0.86).
-      const previousRelease=1-smooth(.08,.46,gatePhase);
-      const pressureBuild=smooth(.50,.86,gatePhase);
-      const pressureRelease=1-.25*smooth(.86,1,gatePhase);
-      this.turnPower=(.72+.42*previousRelease+1.08*pressureBuild)*pressureRelease;
+      const previousGate=nextGateIndex>0?gates[nextGateIndex-1]:nextGateIndex<0?gates[gates.length-1]:null;
+      // Load transfers at the gate, peaks just after passage, then releases
+      // through the midpoint before building toward the next gate.
+      this.turnPower=gatePhase<.10?1+.5*smooth(0,.10,gatePhase)
+        :gatePhase<.30?1.5-.6*smooth(.10,.30,gatePhase)
+        :gatePhase<.48?.9-.18*smooth(.30,.48,gatePhase)
+        :gatePhase<.62?.72
+        :.72+.28*smooth(.62,1,gatePhase);
       this.turnSensitivity=(1-.5*widthPulse)*this.turnPower;
       const steer=clamp(Number(input.steer)||0,-1,1),controlSteer=steer*.75*sensitivity*this.turnSensitivity;
       this.skiSteer+=(controlSteer-this.skiSteer)*(1-Math.exp(-dt*12));
@@ -188,13 +190,16 @@
       this.turnLoad+=(Math.abs(controlSteer)-this.turnLoad)*(1-Math.exp(-dt*10*SPEED_SCALE));
       const targetV=controlSteer*(.75+clamp(baseSpeed/20,0,1)*1.10)*SPEED_SCALE;
       this.velocityX+=(targetV-this.velocityX)*(1-Math.exp(-dt*9*SPEED_SCALE));
-      // Near the gate, speed and edge pressure carry the skier toward the
-      // outside of the turn. This is strongest shortly before the flag and
-      // remains noticeable at the gate plane.
-      const centrifugalWindow=nextGate?smooth(.66,.86,gatePhase)*(1-.25*smooth(.92,1,gatePhase)):0;
+      // Outward turn load peaks shortly after the gate, fades through the
+      // transition, and starts building again toward the next gate.
+      const postGateWindow=previousGate
+        ?.55*(1-smooth(.28,.42,gatePhase))+.45*smooth(0,.08,gatePhase)*(1-smooth(.08,.28,gatePhase))
+        :0;
+      const preGateWindow=nextGate?.55*smooth(.62,1,gatePhase):0;
       const speedRatio=clamp(baseSpeed/(MAX_SPEED/SPEED_SCALE),0,1);
-      this.centrifugalForce=centrifugalWindow*clamp(this.turnLoad,0,1.4)*speedRatio*speedRatio*.42*SPEED_SCALE;
-      if(nextGate)this.velocityX+=nextGate.side*this.centrifugalForce*dt;
+      this.centrifugalForce=(postGateWindow*(previousGate?.side||0)+preGateWindow*(nextGate?.side||0))
+        *clamp(this.turnLoad,0,1.4)*speedRatio*speedRatio*.42*SPEED_SCALE;
+      this.velocityX+=this.centrifugalForce*dt;
       this.x=clamp(this.x+this.velocityX*dt*speedMultiplier,-COURSE_LIMIT,COURSE_LIMIT);
       // Short turns stay light. Sustained steering progressively digs in;
       // releasing the control sheds the accumulated braking over about 0.6 s.
