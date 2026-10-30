@@ -63,7 +63,7 @@
   const BASE_GRADE=.22;
   const slopePattern=[{at:60,to:.64,width:44},{at:255,to:.19,width:46},{at:315,to:.75,width:50},{at:550,to:.25,width:40},{at:580,to:.62,width:36},{at:700,to:.16,width:40}];
   const slopeChanges=[...slopePattern,...slopePattern.map(p=>({...p,at:p.at+720}))];
-  const COURSE_CURVES=[{amp:26,freq:.012},{amp:12,freq:.025},{amp:14,freq:.05817764173314432,phase:-1.9198621771937625}];
+  const COURSE_CURVES=[{amp:26,freq:.012},{amp:12,freq:.025},{amp:21,freq:.05817764173314432,phase:-1.9198621771937625}];
   const curveCenter=d=>COURSE_CURVES.reduce((sum,c)=>sum+c.amp*Math.sin(d*c.freq+(c.phase||0)),0);
   const curveSlope=d=>COURSE_CURVES.reduce((sum,c)=>sum+c.amp*c.freq*Math.cos(d*c.freq+(c.phase||0)),0);
   function courseGrade(distance){let grade=BASE_GRADE,previous=BASE_GRADE;for(const part of slopeChanges){const t=clamp((distance-part.at+part.width/2)/part.width,0,1);grade+=(part.to-previous)*t*t*(3-2*t);previous=part.to;}return grade;}
