@@ -212,7 +212,7 @@
       this.turnBrakeMultiplier=1+3*sustained*sustained;
       const grade=courseGrade(this.distance);
       const surfaceScale=Math.sqrt(1+grade*grade+curveSlope(this.distance)**2);
-      const gravity=9.81*grade/surfaceScale;
+      const gravity=9.81*grade/surfaceScale*.5;
       const resistance=.16+.003*baseSpeed*baseSpeed;
       const previousSpeed=this.speed;
       this.snowLoad=(fluffySnowAt(this.x*TRACK_UNIT-.24,this.distance)+fluffySnowAt(this.x*TRACK_UNIT+.24,this.distance))*.5;
