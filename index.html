@@ -56,7 +56,7 @@
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const FINISH=1440;
   const TRACK_UNIT=11;
-  const netHalfWidth=distance=>42.5+Math.sin(distance*.015)*.32;
+  const netHalfWidth=distance=>47+Math.sin(distance*.015)*.32;
   const SPEED_SCALE=3;
   const MIN_SPEED=4.5*SPEED_SCALE,MAX_SPEED=33*SPEED_SCALE;
   // Shared smooth downhill profile: height and gravity use the same derivative.
@@ -72,9 +72,9 @@
   const GATE_WIDTH=.52;
   const FLAG_WIDTH=.20,SKIER_CLEARANCE=.035;
   const SKI_OUTER_EDGE=.335,POLE_REACH=.90;
-  const RUT={depth:1.92,lip:.24,halfNarrow:8.4375,halfWide:16.875,innerExtra:2.7,edgeFeather:2.4};
+  const RUT={depth:1.92,lip:.24,halfNarrow:5.625,halfWide:11.25,innerExtra:1.8,edgeFeather:2.4};
   const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
-  const COURSE_LIMIT=3.88;
+  const COURSE_LIMIT=4.35;
   const gates=Array.from({length:24},(_,i)=>{
     const distance=60+(i%12)*54+Math.floor(i/12)*720;
     const side=i%2?-1:1;
@@ -275,7 +275,7 @@
 /* Self-contained WebGL2 alpine scene. Geometry and shaders are generated locally. */
 (()=>{'use strict';
 const {gates,FINISH,FLAG_WIDTH,clamp,courseHeight,SPEED_SCALE,COURSE_CURVES,curveCenter,curveSlope,TRACK_UNIT,netHalfWidth,RUT,rutProfile}=globalThis.FestivalSkiCore;
-const WIDTH=TRACK_UNIT, SUN=[-.38,.34,-.86], COURSE_EDGE=40.5, FINISH_HALF=42;
+const WIDTH=TRACK_UNIT, SUN=[-.38,.34,-.86], COURSE_EDGE=44.5, FINISH_HALF=46.5;
 const mix=(a,b,t)=>a+(b-a)*t;
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const sub=(a,b)=>a.map((v,i)=>v-b[i]);
@@ -435,7 +435,7 @@ void main(){
    float fissure=smoothstep(.38,.68,textureNoise(vPosition.xy*.23+vPosition.z*.045));
    vec3 stone=mix(vec3(.12,.16,.21),vec3(.33,.32,.30),strata*.60+fissure*.40);
    base=mix(base,stone,slope*.94);base*=.97+.06*grain*(1.-smoothstep(10.,65.,cameraDistance));
-   float piste=1.-smoothstep(41.,43.,abs(pisteX));
+   float piste=1.-smoothstep(45.,47.,abs(pisteX));
    float nearFade=1.-smoothstep(12.,65.,distance(uEye,vPosition));
    float phase=pisteX*86.+sin(vPosition.z*.19)*.2;
    float groom=sin(phase)*.038*piste*nearFade*(1.-smoothstep(.5,3.14,fwidth(phase)));
