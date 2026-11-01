@@ -15,7 +15,7 @@ function connect(){
   peer.on('open',()=>{setStatus('PCを呼び出しています…');connection=peer.connect(hostId,{reliable:true});connectTimer=setTimeout(()=>{if(!connection?.open){setStatus('接続できません。PC側にQRコードと「接続待ち」が表示されているか確認し、両方のページを再読み込みして再試行してください');enable.disabled=false;enable.textContent='もう一度接続する';}},15000);
    connection.on('open',()=>{if(connectTimer)clearTimeout(connectTimer);setStatus('PCと接続しました。傾けて操作できます');enable.textContent='PCと接続中';enable.disabled=true;});
    connection.on('close',()=>{if(connectTimer)clearTimeout(connectTimer);setStatus('接続が切れました。再接続してください');enable.disabled=false;enable.textContent='もう一度接続する';});
-   connection.on('error',()=>{if(connectTimer)clearTimeout(connectTimer);setStatus('通信エラーです。両方の端末がインターネットに接続しているか確認してください');enable.disabled=false;enable.textContent='もう一度接続する';});
+   connection.on('error',error=>{if(connectTimer)clearTimeout(connectTimer);setStatus('通信エラー（'+(error?.type||error?.message||'WebRTC')+'）。PCで新しいQRを出し直し、両端末を同じWi-Fiにして再試行してください');enable.disabled=false;enable.textContent='もう一度接続する';});
   });
   peer.on('error',error=>{if(connectTimer)clearTimeout(connectTimer);setStatus('接続エラー（'+(error.type||'不明')+'）。両方の端末の通信を確認して再試行してください');enable.disabled=false;enable.textContent='もう一度接続する';});
  }catch{setStatus('接続を開始できませんでした。ページを再読み込みしてください');enable.disabled=false;enable.textContent='再読み込み後に接続';}
